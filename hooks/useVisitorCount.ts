@@ -9,8 +9,29 @@ type UseVisitorCountResult = {
   error: string | null;
 };
 
+/** Dedupe Strict Mode double-mount so one page load = one POST */
+let visitInflight: Promise<VisitorCountSnapshot> | null = null;
+
+async function postVisit(): Promise<VisitorCountSnapshot> {
+  const response = await fetch("/api/visitors", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "X-FK-Visit": "1",
+    },
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to load visitor count.");
+  }
+
+  return (await response.json()) as VisitorCountSnapshot;
+}
+
 /**
- * Records a unique visit once, then displays the live total.
+ * Records a visit once from the homepage, then displays unique visitors.
  */
 export function useVisitorCount(): UseVisitorCountResult {
   const [count, setCount] = useState<number | null>(null);
@@ -20,30 +41,27 @@ export function useVisitorCount(): UseVisitorCountResult {
   useEffect(() => {
     let cancelled = false;
 
-    void (async () => {
-      try {
-        const response = await fetch("/api/visitors", {
-          method: "POST",
-          headers: { Accept: "application/json" },
-          credentials: "same-origin",
-        });
+    if (!visitInflight) {
+      visitInflight = postVisit().finally(() => {
+        // Keep resolved promise for remounts in the same page lifetime
+      });
+    }
 
-        if (!response.ok) {
-          throw new Error("Unable to load visitor count.");
-        }
-
-        const payload = (await response.json()) as VisitorCountSnapshot;
+    void visitInflight
+      .then((payload) => {
         if (cancelled) return;
         setCount(payload.count);
         setError(null);
-      } catch {
+      })
+      .catch(() => {
         if (cancelled) return;
+        visitInflight = null;
         setError("Unable to load visitor count.");
         setCount(null);
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    })();
+      });
 
     return () => {
       cancelled = true;

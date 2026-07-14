@@ -17,6 +17,18 @@ export type VisitorCountSnapshot = {
   totalVisits: number;
   /** Whether this request counted a new unique visitor */
   recorded: boolean;
+  /**
+   * Why recording was skipped (null when a new unique was recorded).
+   * existing_cookie still increments totalVisits.
+   */
+  skipReason?:
+    | "existing_cookie"
+    | "bot_detection"
+    | "empty_user_agent"
+    | "prefetch_request"
+    | "preview_request"
+    | "health_check"
+    | null;
   fetchedAt: string;
 };
 

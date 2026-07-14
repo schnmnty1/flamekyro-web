@@ -1,25 +1,21 @@
 "use client";
 
+import { StatOdometer } from "@/components/stats/StatOdometer";
 import { useVisitorCount } from "@/hooks/useVisitorCount";
-
-function formatVisitors(count: number): string {
-  return new Intl.NumberFormat("en-US").format(count);
-}
+import { formatVisitorCount } from "@/lib/stats/format";
 
 /**
- * Minimal website visitor band — real count from `/api/visitors`.
+ * Minimal visitor band — odometer metric, exact under 1K, compact K+ at 1K+.
  */
 export function VisitorCounter() {
   const { count, loading, error } = useVisitorCount();
 
   const display =
     typeof count === "number"
-      ? formatVisitors(count)
-      : loading
+      ? formatVisitorCount(count)
+      : loading || error
         ? "—"
-        : error
-          ? "—"
-          : "—";
+        : "—";
 
   return (
     <section
@@ -32,14 +28,14 @@ export function VisitorCounter() {
             id="visitor-counter-heading"
             className="text-section text-[0.65rem] tracking-[0.22em] text-white/34 sm:text-[0.7rem]"
           >
-            Website Visitors
+            Visitors
           </h2>
-          <p
+          <div
             className="text-metric text-brand mt-1.5 text-lg font-semibold text-white/70 sm:text-xl"
             aria-live="polite"
           >
-            {display}
-          </p>
+            <StatOdometer value={display} />
+          </div>
         </div>
       </div>
     </section>
