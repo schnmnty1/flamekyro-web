@@ -1,26 +1,193 @@
 @import "tailwindcss";
 
+/* -------------------------------------------------------------------------- */
+/* Design tokens                                                              */
+/* -------------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core palette */
+  --background: #050816;
+  --surface: #0b1220;
+  --primary: #7c3aed;
+  --secondary: #06b6d4;
+  --accent: #8b5cf6;
+  --glow: #00f5ff;
+  --text: #ffffff;
+
+  /* Derived */
+  --text-muted: color-mix(in srgb, var(--text) 55%, transparent);
+  --border: color-mix(in srgb, var(--text) 10%, transparent);
+  --ring: color-mix(in srgb, var(--glow) 50%, transparent);
 }
 
+/* Tailwind v4 theme bridge — enables bg-primary, text-glow, font-heading, etc. */
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-glow: var(--glow);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+
+  /* next/font → Tailwind font-* utilities */
+  --font-primary: var(--font-space-grotesk);
+  --font-secondary: var(--font-inter);
+  --font-heading: var(--font-orbitron);
+  --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* -------------------------------------------------------------------------- */
+/* Base                                                                       */
+/* -------------------------------------------------------------------------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+  font-family: var(--font-secondary), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Selection styled to brand glow */
+::selection {
+  background-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--text);
+}
+
+/* Focus ring — accessible, brand-aligned */
+:focus-visible {
+  outline: 2px solid var(--glow);
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reusable utility classes                                                   */
+/* -------------------------------------------------------------------------- */
+
+/* Typography roles */
+@utility text-display {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@utility text-brand {
+  font-family: var(--font-primary), ui-sans-serif, system-ui, sans-serif;
+}
+
+@utility text-body {
+  font-family: var(--font-secondary), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Layout containers */
+@utility container-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1.25rem;
+
+  @media (width >= 640px) {
+    padding-inline: 1.5rem;
+  }
+
+  @media (width >= 1024px) {
+    padding-inline: 2rem;
+  }
+}
+
+@utility section-y {
+  padding-block: 4rem;
+
+  @media (width >= 768px) {
+    padding-block: 6rem;
+  }
+
+  @media (width >= 1024px) {
+    padding-block: 7.5rem;
+  }
+}
+
+/* Surfaces */
+@utility surface {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+}
+
+@utility surface-glass {
+  background-color: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+}
+
+/* Glow / neon accents */
+@utility glow-primary {
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--primary) 45%, transparent),
+    0 0 60px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+@utility glow-cyan {
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--glow) 50%, transparent),
+    0 0 60px color-mix(in srgb, var(--glow) 20%, transparent);
+}
+
+@utility text-gradient-brand {
+  background-image: linear-gradient(
+    135deg,
+    var(--text) 0%,
+    var(--accent) 45%,
+    var(--glow) 100%
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+/* Ambient grid used by AmbientBackground */
+@utility bg-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--text) 4%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--text) 4%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+}
+
+/* Soft white glow behind hero wordmark */
+@utility hero-glow {
+  text-shadow:
+    0 0 24px color-mix(in srgb, var(--text) 35%, transparent),
+    0 0 64px color-mix(in srgb, var(--glow) 18%, transparent),
+    0 0 120px color-mix(in srgb, var(--primary) 12%, transparent);
 }
