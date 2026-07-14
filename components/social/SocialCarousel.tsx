@@ -10,19 +10,24 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { animate, motion, useMotionValue } from "framer-motion";
+import { ActiveCardGlow } from "@/components/social/ActiveCardGlow";
 import { CarouselInfo } from "@/components/social/CarouselInfo";
 import { CarouselPagination } from "@/components/social/CarouselPagination";
 import { SocialCard } from "@/components/social/SocialCard";
+import {
+  COVERFLOW_SPRING,
+  DRAG_RELEASE_SPRING,
+} from "@/components/social/cardThemes";
+import { useSpatialLayer } from "@/components/spatial";
 import { SOCIAL_PLATFORMS } from "@/data/social";
-import { useSocialCarousel } from "@/hooks";
-import { CAROUSEL_SPRING } from "@/lib/motion";
+import { usePrefersReducedMotion, useSocialCarousel } from "@/hooks";
 
-const DRAG_THRESHOLD_PX = 56;
+const DRAG_THRESHOLD_PX = 48;
+const VELOCITY_STEP = 720;
 const VISIBLE_RANGE = 2;
 
 /**
- * Signature 3D social coverflow — infinite, drag/swipe + keyboard driven.
- * Does not own audio or cursor behavior.
+ * Premium 3D social coverflow — physical drag, cinematic cards, active glow.
  */
 export function SocialCarousel() {
   const labelId = useId();
@@ -31,22 +36,40 @@ export function SocialCarousel() {
   const suppressClickRef = useRef(false);
   const dragX = useMotionValue(0);
   const [isCompact, setIsCompact] = useState(false);
+  const [liteEffects, setLiteEffects] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const { activeIndex, goTo, next, prev, offsets } = useSocialCarousel({
     length: SOCIAL_PLATFORMS.length,
   });
 
+  const spatial = useSpatialLayer({
+    rotate: liteEffects || prefersReducedMotion ? 0 : 1.15,
+    translate: liteEffects || prefersReducedMotion ? 0 : 8,
+  });
+
   const activePlatform = SOCIAL_PLATFORMS[activeIndex];
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 767px)");
-    const sync = () => setIsCompact(media.matches);
+    const compactMq = window.matchMedia("(max-width: 767px)");
+    const coarseMq = window.matchMedia("(pointer: coarse)");
+    const hoverMq = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+    const sync = () => {
+      setIsCompact(compactMq.matches);
+      setLiteEffects(coarseMq.matches || !hoverMq.matches);
+    };
     sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
+    compactMq.addEventListener("change", sync);
+    coarseMq.addEventListener("change", sync);
+    hoverMq.addEventListener("change", sync);
+    return () => {
+      compactMq.removeEventListener("change", sync);
+      coarseMq.removeEventListener("change", sync);
+      hoverMq.removeEventListener("change", sync);
+    };
   }, []);
 
-  // Keep keyboard focus on the active card when arrows change selection.
   useEffect(() => {
     const root = regionRef.current;
     if (!root) return;
@@ -54,9 +77,7 @@ export function SocialCarousel() {
     if (!activeEl || !root.contains(activeEl)) return;
     if (activeEl.getAttribute("role") === "tab") return;
 
-    const activeCard = root.querySelector<HTMLElement>(
-      `[aria-current="true"]`,
-    );
+    const activeCard = root.querySelector<HTMLElement>(`[aria-current="true"]`);
     activeCard?.focus({ preventScroll: true });
   }, [activeIndex]);
 
@@ -87,16 +108,31 @@ export function SocialCarousel() {
 
   const settleDrag = useCallback(
     (offsetX: number, velocityX: number) => {
-      const flicked = Math.abs(velocityX) > 450;
-      const dragged = Math.abs(offsetX) > DRAG_THRESHOLD_PX;
+      const distanceSteps = Math.round(Math.abs(offsetX) / 140);
+      const velocitySteps = Math.round(Math.abs(velocityX) / VELOCITY_STEP);
+      const steps = Math.min(
+        2,
+        Math.max(
+          Math.abs(offsetX) > DRAG_THRESHOLD_PX || Math.abs(velocityX) > 420
+            ? 1
+            : 0,
+          distanceSteps + (Math.abs(velocityX) > 420 ? velocitySteps : 0),
+        ),
+      );
 
-      if (flicked || dragged) {
+      if (steps > 0) {
         suppressClickRef.current = true;
-        if (offsetX < 0 || velocityX < -450) next();
-        else prev();
+        const forward = offsetX < 0 || velocityX < -420;
+        for (let i = 0; i < steps; i += 1) {
+          if (forward) next();
+          else prev();
+        }
       }
 
-      void animate(dragX, 0, CAROUSEL_SPRING);
+      void animate(dragX, 0, {
+        ...DRAG_RELEASE_SPRING,
+        velocity: velocityX * 0.12,
+      });
     },
     [dragX, next, prev],
   );
@@ -104,7 +140,6 @@ export function SocialCarousel() {
   const onPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement;
-      // Pagination / explicit buttons stay click-only
       if (target.closest("button, [role='tab']")) return;
 
       const startX = event.clientX;
@@ -121,7 +156,7 @@ export function SocialCarousel() {
         const dx = moveEvent.clientX - startX;
         const dy = moveEvent.clientY - startY;
 
-        if (isHorizontal === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+        if (isHorizontal === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
           isHorizontal = Math.abs(dx) >= Math.abs(dy);
           if (!isHorizontal) {
             tracking = false;
@@ -140,7 +175,9 @@ export function SocialCarousel() {
         velocityX = ((moveEvent.clientX - lastX) / dt) * 1000;
         lastX = moveEvent.clientX;
         lastT = now;
-        dragX.set(dx * 0.55);
+        // Physical feel — slight rubber-band past edges of a single step
+        const resisted = Math.tanh(dx / 280) * 180;
+        dragX.set(resisted);
       };
 
       const onUp = (upEvent: PointerEvent) => {
@@ -150,7 +187,7 @@ export function SocialCarousel() {
         window.removeEventListener("pointercancel", onUp);
 
         if (!decided || !isHorizontal) {
-          dragX.set(0);
+          void animate(dragX, 0, COVERFLOW_SPRING);
           return;
         }
 
@@ -179,7 +216,7 @@ export function SocialCarousel() {
       <div className="container-page mb-4 text-center sm:mb-5">
         <h2
           id={labelId}
-          className="text-display text-sm tracking-[0.35em] text-white/55 sm:text-base"
+          className="text-display text-sm uppercase tracking-[0.38em] text-white/48 sm:text-base"
         >
           Connect
         </h2>
@@ -196,15 +233,23 @@ export function SocialCarousel() {
       >
         <div
           ref={stageRef}
-          className="relative mx-auto h-[280px] w-full max-w-6xl touch-pan-y sm:h-[360px] lg:h-[400px]"
-          style={{ perspective: isCompact ? 900 : 1400 }}
+          className="relative z-10 mx-auto h-[280px] w-full max-w-6xl touch-pan-y sm:h-[360px] lg:h-[400px]"
+          style={{ perspective: isCompact ? 1200 : 1700 }}
           onPointerDown={onPointerDown}
           onClickCapture={onClickCapture}
         >
+          <ActiveCardGlow
+            platform={activePlatform}
+            lite={liteEffects || prefersReducedMotion}
+          />
+
           <motion.div
-            className="relative h-full w-full"
+            className="relative h-full w-full will-change-transform"
             style={{
               x: dragX,
+              rotateX: spatial.rotateX,
+              rotateY: spatial.rotateY,
+              y: spatial.y,
               transformStyle: "preserve-3d",
             }}
           >
@@ -220,6 +265,7 @@ export function SocialCarousel() {
                   isActive={index === activeIndex}
                   visibleRange={VISIBLE_RANGE}
                   isCompact={isCompact}
+                  liteEffects={liteEffects}
                   onSelect={() => goTo(index)}
                 />
               ))}
@@ -231,7 +277,7 @@ export function SocialCarousel() {
           </span>
         </div>
 
-        <div className="mt-8 flex flex-col items-center gap-8 sm:mt-10">
+        <div className="mt-8 flex flex-col items-center gap-7 sm:mt-10 sm:gap-8">
           <CarouselPagination
             platforms={SOCIAL_PLATFORMS}
             activeIndex={activeIndex}

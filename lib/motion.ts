@@ -81,14 +81,18 @@ export const heroHeading: Variants = {
   },
 };
 
-/** Soft button hover spring */
+/** Soft button hover spring — restrained for premium feel */
 export const buttonHover = {
-  scale: 1.04,
-  transition: SPRING_SNAPPY,
+  scale: 1.02,
+  transition: {
+    type: "spring" as const,
+    stiffness: 420,
+    damping: 32,
+  },
 };
 
 export const buttonTap = {
-  scale: 0.97,
+  scale: 0.985,
 };
 
 /** Fade + slight rise — use for section entrances */

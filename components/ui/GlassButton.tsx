@@ -31,11 +31,10 @@ type GlassButtonAsLink = SharedProps & {
 export type GlassButtonProps = GlassButtonAsButton | GlassButtonAsLink;
 
 const baseClass =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-white/10 " +
-  "bg-white/[0.06] px-4 py-2 text-sm font-medium tracking-wide text-white/90 " +
-  "backdrop-blur-md transition-[box-shadow,background-color,border-color,color] " +
-  "duration-300 hover:border-glow/30 hover:bg-white/[0.10] hover:text-white " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 " +
+  "glass-control inline-flex items-center justify-center gap-2 rounded-full " +
+  "px-4 py-2 text-sm font-medium tracking-[0.02em] text-white/88 " +
+  "hover:border-white/[0.16] hover:bg-white/[0.09] hover:text-white " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/55 " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
   "disabled:pointer-events-none disabled:opacity-50";
 
@@ -51,7 +50,8 @@ export const GlassButton = forwardRef<
 ) {
   const classes = cn(
     baseClass,
-    glow && "hover:shadow-[0_0_24px_rgba(0,245,255,0.18)]",
+    glow &&
+      "hover:shadow-[0_1px_0_rgba(255,255,255,0.14)_inset,0_0_20px_rgba(0,245,255,0.14),0_8px_28px_rgba(0,0,0,0.28)]",
     className,
   );
 

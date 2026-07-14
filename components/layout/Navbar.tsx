@@ -4,15 +4,17 @@ import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Copy } from "lucide-react";
 import { GlassButton } from "@/components/ui";
+import { useSpatialLayer } from "@/components/spatial";
 import { BRAND, LINKS } from "@/lib/constants";
 import { navSlideDown } from "@/lib/motion";
 
 /**
  * Top navigation — brand left, glass actions right.
- * Center intentionally empty for cinematic balance.
+ * Minimal spatial response (≤0.5°).
  */
 export function Navbar() {
   const [copied, setCopied] = useState(false);
+  const layer = useSpatialLayer({ rotate: 0.45, translate: 3 });
 
   const handleCopy = useCallback(async () => {
     try {
@@ -30,13 +32,20 @@ export function Navbar() {
       initial="hidden"
       animate="visible"
       className="fixed inset-x-0 top-0 z-50"
+      style={{ perspective: 1000 }}
     >
       <div className="container-page">
-        <nav
+        <motion.nav
           aria-label="Primary"
-          className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-white/[0.07] bg-surface/50 px-4 py-3 backdrop-blur-xl sm:px-5"
+          style={{
+            rotateX: layer.rotateX,
+            rotateY: layer.rotateY,
+            x: layer.x,
+            y: layer.y,
+            transformStyle: "preserve-3d",
+          }}
+          className="glass-panel mt-4 flex items-center justify-between gap-4 rounded-2xl px-4 py-3 will-change-transform sm:px-5"
         >
-          {/* Brand */}
           <a
             href="/"
             className="group flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -45,18 +54,16 @@ export function Navbar() {
               aria-hidden="true"
               className="relative flex h-8 w-8 items-center justify-center"
             >
-              <span className="absolute inset-0 rounded-full bg-glow/30 blur-md transition-opacity group-hover:opacity-100" />
-              <span className="relative h-3.5 w-3.5 rounded-full bg-glow shadow-[0_0_14px_rgba(0,245,255,0.85)]" />
+              <span className="absolute inset-0 rounded-full bg-glow/25 blur-md transition-opacity duration-300 group-hover:opacity-100" />
+              <span className="relative h-3.5 w-3.5 rounded-full bg-glow shadow-[0_0_10px_rgba(0,245,255,0.75),0_0_24px_rgba(0,245,255,0.35)]" />
             </span>
-            <span className="text-brand text-sm font-semibold tracking-[0.14em] text-white sm:text-[0.95rem]">
+            <span className="text-brand text-sm font-semibold tracking-[0.12em] text-white/95 sm:text-[0.95rem]">
               {BRAND.name}
             </span>
           </a>
 
-          {/* Center — reserved empty */}
           <div className="hidden flex-1 md:block" aria-hidden="true" />
 
-          {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-2.5">
             <GlassButton
               onClick={handleCopy}
@@ -88,7 +95,7 @@ export function Navbar() {
               Join Discord
             </GlassButton>
           </div>
-        </nav>
+        </motion.nav>
       </div>
     </motion.header>
   );

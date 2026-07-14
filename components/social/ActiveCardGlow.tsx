@@ -1,0 +1,55 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  PLATFORM_CARD_THEMES,
+  type PlatformCardTheme,
+} from "@/components/social/cardThemes";
+import { usePrefersReducedMotion } from "@/hooks";
+import type { SocialPlatform } from "@/types/social";
+
+type ActiveCardGlowProps = {
+  platform: SocialPlatform;
+  /** Reduce blur/intensity on touch / reduced-motion */
+  lite: boolean;
+};
+
+/**
+ * Soft colored bloom behind the active card only.
+ * Color crossfades in 500ms when the active platform changes.
+ */
+export function ActiveCardGlow({ platform, lite }: ActiveCardGlowProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const theme: PlatformCardTheme = PLATFORM_CARD_THEMES[platform.icon];
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 flex items-center justify-center"
+    >
+      <AnimatePresence mode="sync">
+        <motion.div
+          key={platform.id}
+          className="absolute h-[240px] w-[240px] rounded-full sm:h-[320px] sm:w-[320px] lg:h-[360px] lg:w-[360px]"
+          style={{
+            background: `radial-gradient(circle, ${theme.glow} 0%, transparent 68%)`,
+            filter: lite || prefersReducedMotion ? "blur(28px)" : "blur(48px)",
+            willChange: "opacity, transform",
+          }}
+          initial={
+            prefersReducedMotion
+              ? { opacity: 0.85 }
+              : { opacity: 0, scale: 0.92 }
+          }
+          animate={{ opacity: lite ? 0.55 : 0.85, scale: 1 }}
+          exit={
+            prefersReducedMotion
+              ? { opacity: 0 }
+              : { opacity: 0, scale: 1.04 }
+          }
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </AnimatePresence>
+    </div>
+  );
+}

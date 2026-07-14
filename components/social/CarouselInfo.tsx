@@ -9,7 +9,8 @@ type CarouselInfoProps = {
 };
 
 /**
- * Active platform copy + music hint (visual only — no audio yet).
+ * Active platform copy under the carousel.
+ * Music unlock hint lives in MusicProvider (not duplicated here).
  */
 export function CarouselInfo({ platform }: CarouselInfoProps) {
   return (
@@ -23,26 +24,22 @@ export function CarouselInfo({ platform }: CarouselInfoProps) {
           transition={SPRING_SOFT}
           className="space-y-2"
         >
-          <p className="text-brand text-lg font-semibold tracking-wide text-white sm:text-xl">
+          <p className="text-brand text-lg font-semibold tracking-[0.02em] text-white/95 sm:text-xl">
             {platform.name}
           </p>
-          <p className="text-sm text-white/45 sm:text-base">
+          <p className="text-sm leading-relaxed tracking-[-0.01em] text-white/42 sm:text-base">
             {platform.description}
           </p>
           <a
             href={platform.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block text-sm text-glow/80 underline-offset-4 transition-colors hover:text-glow hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-block text-sm tracking-[0.01em] text-glow/75 underline-offset-4 transition-colors duration-300 hover:text-glow hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {platform.handle}
           </a>
         </motion.div>
       </AnimatePresence>
-
-      <p className="text-[0.7rem] uppercase tracking-[0.28em] text-white/30 sm:text-xs">
-        Click anywhere to start music
-      </p>
     </div>
   );
 }

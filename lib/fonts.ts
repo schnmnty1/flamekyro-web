@@ -1,7 +1,7 @@
 import { Inter, Orbitron, Space_Grotesk } from "next/font/google";
 
 /**
- * FLAMEKYRO type system
+ * FlameKyro type system
  * - Space Grotesk → primary UI / brand body
  * - Inter → secondary / long-form readability
  * - Orbitron → display headings (gaming aesthetic)

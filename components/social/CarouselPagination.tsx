@@ -1,5 +1,6 @@
 "use client";
 
+import { PLATFORM_CARD_THEMES } from "@/components/social/cardThemes";
 import { cn } from "@/lib/cn";
 import type { SocialPlatform } from "@/types/social";
 
@@ -22,6 +23,7 @@ export function CarouselPagination({
     >
       {platforms.map((platform, index) => {
         const isActive = index === activeIndex;
+        const theme = PLATFORM_CARD_THEMES[platform.icon];
         return (
           <button
             key={platform.id}
@@ -32,15 +34,15 @@ export function CarouselPagination({
             tabIndex={isActive ? 0 : -1}
             onClick={() => onSelect(index)}
             className={cn(
-              "h-2 rounded-full transition-all duration-300",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              isActive ? "w-7" : "w-2 bg-white/25 hover:bg-white/40",
+              "h-1.5 rounded-full transition-all duration-300 ease-out",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/55 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              isActive ? "w-7" : "w-1.5 bg-white/20 hover:bg-white/35",
             )}
             style={
               isActive
                 ? {
-                    backgroundColor: platform.accent,
-                    boxShadow: `0 0 12px ${platform.accent}88`,
+                    backgroundColor: theme.accent,
+                    boxShadow: `0 0 10px ${theme.glow}, 0 0 22px ${theme.shadow}`,
                   }
                 : undefined
             }

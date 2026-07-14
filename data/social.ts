@@ -1,14 +1,14 @@
 import type { SocialPlatform } from "@/types/social";
 
 /**
- * FLAMEKYRO social destinations — single source of truth for the carousel.
+ * FlameKyro social destinations — single source of truth for the carousel.
  * Update URLs / handles here; UI reads this array only.
  */
 export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     id: "twitch",
     name: "Twitch",
-    handle: "@FLAMEKYRO",
+    handle: "@FlameKyro",
     url: "https://www.twitch.tv/flamekyro",
     description: "Live Valorant sessions, clutches, and daily streams.",
     accent: "#9146FF",
@@ -17,8 +17,8 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     id: "youtube",
     name: "YouTube",
-    handle: "@FLAMEKYRO",
-    url: "https://www.youtube.com/@FLAMEKYRO",
+    handle: "@FlameKyro",
+    url: "https://www.youtube.com/@FlameKyro",
     description: "Highlights, funny moments, and long-form uploads.",
     accent: "#FF0000",
     icon: "youtube",
@@ -26,7 +26,7 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     id: "discord",
     name: "Discord",
-    handle: "FLAMEKYRO Community",
+    handle: "FlameKyro Community",
     url: "https://discord.gg/flamekyro",
     description: "Join the squad — chat, clips, and community events.",
     accent: "#5865F2",
@@ -35,7 +35,7 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     id: "instagram",
     name: "Instagram",
-    handle: "@FLAMEKYRO",
+    handle: "@FlameKyro",
     url: "https://www.instagram.com/flamekyro",
     description: "Behind the scenes, shorts, and stream vibes.",
     accent: "#E4405F",
@@ -44,7 +44,7 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     id: "tiktok",
     name: "TikTok",
-    handle: "@FLAMEKYRO",
+    handle: "@FlameKyro",
     url: "https://www.tiktok.com/@flamekyro",
     description: "Quick clutches and chaotic gaming moments.",
     accent: "#69C9D0",
@@ -53,7 +53,7 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     id: "x",
     name: "X",
-    handle: "@FLAMEKYRO",
+    handle: "@FlameKyro",
     url: "https://x.com/flamekyro",
     description: "Updates, schedule drops, and community shoutouts.",
     accent: "#A8B3CF",

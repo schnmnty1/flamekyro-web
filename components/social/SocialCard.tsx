@@ -1,26 +1,30 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, useMotionTemplate, useMotionValue, useSpring } from "framer-motion";
 import { SocialIcon } from "@/components/social/SocialIcon";
+import {
+  COVERFLOW_SPRING,
+  PLATFORM_CARD_THEMES,
+} from "@/components/social/cardThemes";
+import { BRAND } from "@/lib/constants";
+import { usePrefersReducedMotion } from "@/hooks";
 import { cn } from "@/lib/cn";
-import { CAROUSEL_SPRING } from "@/lib/motion";
 import type { SocialPlatform } from "@/types/social";
 
 export type SocialCardProps = {
   platform: SocialPlatform;
-  /** Circular offset from active card (−n/2 … n/2) */
   offset: number;
   isActive: boolean;
-  /** Max |offset| still rendered in the 3D stage */
   visibleRange: number;
   onSelect: () => void;
-  /** Desktop vs mobile spacing / scale */
   isCompact: boolean;
+  /** Skip float / heavy filters on touch devices */
+  liteEffects: boolean;
 };
 
 /**
- * Single glass social card positioned in 3D coverflow space.
- * Outer shell handles centering; motion layer owns 3D transforms only.
+ * Premium glass platform card — GPU transforms only for coverflow motion.
  */
 export function SocialCard({
   platform,
@@ -29,34 +33,77 @@ export function SocialCard({
   visibleRange,
   onSelect,
   isCompact,
+  liteEffects,
 }: SocialCardProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const theme = PLATFORM_CARD_THEMES[platform.icon];
+  const [hovered, setHovered] = useState(false);
+
   const abs = Math.abs(offset);
   const hidden = abs > visibleRange;
+  const isSide = abs === 1;
+  const isBack = abs >= 2;
 
-  const spacing = isCompact ? 118 : 210;
-  const rotateY = offset * (isCompact ? -28 : -38);
-  const scale = isActive ? 1 : Math.max(0.72, 1 - abs * 0.14);
-  const z = -abs * (isCompact ? 90 : 140);
-  const opacity = hidden ? 0 : Math.max(0.35, 1 - abs * 0.28);
+  const spacing = isCompact ? 124 : 220;
+  const rotateY = offset * (isCompact ? -26 : -34);
+  const scale = isActive ? 1 : isSide ? 0.9 : Math.max(0.82, 1 - abs * 0.09);
+  const z = isActive ? 48 : -abs * (isCompact ? 80 : 120);
+  const opacity = hidden
+    ? 0
+    : isActive
+      ? 1
+      : isSide
+        ? 0.86
+        : Math.max(0.75, 1 - abs * 0.12);
   const y = abs * (isCompact ? 6 : 10);
+
+  // Pointer-driven specular (desktop only) — MotionValues, no re-renders
+  const glareX = useMotionValue(50);
+  const glareY = useMotionValue(28);
+  const glareXSpring = useSpring(glareX, { stiffness: 220, damping: 28 });
+  const glareYSpring = useSpring(glareY, { stiffness: 220, damping: 28 });
+  const glareBackground = useMotionTemplate`radial-gradient(420px circle at ${glareXSpring}% ${glareYSpring}%, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 28%, transparent 58%)`;
+
+  const enableHoverFX = isActive && !liteEffects && !prefersReducedMotion;
 
   return (
     <div
       className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       style={{
-        zIndex: Math.round(100 - abs * 10),
+        zIndex: Math.round(120 - abs * 12),
         pointerEvents: hidden ? "none" : "auto",
       }}
     >
+      {/* Soft contact shadow under the floating center card */}
+      {isActive ? (
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-[72%] left-1/2 h-6 w-[58%] -translate-x-1/2 rounded-[100%] sm:h-8 sm:w-[62%]"
+          style={{
+            background: `radial-gradient(ellipse at center, ${theme.shadow} 0%, transparent 70%)`,
+            filter: liteEffects ? "blur(8px)" : "blur(14px)",
+          }}
+          animate={
+            prefersReducedMotion || liteEffects
+              ? { opacity: 0.45, y: 0 }
+              : { opacity: [0.35, 0.55, 0.35], y: [0, 2, 0] }
+          }
+          transition={
+            prefersReducedMotion || liteEffects
+              ? { duration: 0.3 }
+              : { duration: 4.8, repeat: Infinity, ease: "easeInOut" }
+          }
+        />
+      ) : null}
+
       <motion.a
         href={platform.url}
         target="_blank"
         rel="noopener noreferrer"
         tabIndex={isActive ? 0 : -1}
-        aria-label={`Open ${platform.name} — ${platform.handle}`}
+        aria-label={`Open ${platform.name} — ${BRAND.handle}`}
         aria-current={isActive ? "true" : undefined}
         onClick={(event) => {
-          // Side cards rotate into focus first; only the active card navigates.
           if (!isActive) {
             event.preventDefault();
             onSelect();
@@ -68,57 +115,142 @@ export function SocialCard({
             onSelect();
           }
         }}
+        onHoverStart={() => {
+          if (enableHoverFX) setHovered(true);
+        }}
+        onHoverEnd={() => {
+          setHovered(false);
+          glareX.set(50);
+          glareY.set(28);
+        }}
+        onPointerMove={(event) => {
+          if (!enableHoverFX) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const px = ((event.clientX - rect.left) / rect.width) * 100;
+          const py = ((event.clientY - rect.top) / rect.height) * 100;
+          glareX.set(px);
+          glareY.set(py);
+        }}
         className={cn(
-          "relative flex flex-col items-center justify-center gap-4 rounded-3xl",
+          "relative block overflow-hidden will-change-transform",
           "h-[220px] w-[150px] sm:h-[280px] sm:w-[200px] lg:h-[320px] lg:w-[230px]",
-          "border border-white/10 bg-white/[0.06] backdrop-blur-xl",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          isActive && "border-white/20",
+          "rounded-[26px] border backdrop-blur-[24px] backdrop-saturate-150",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/65 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          isActive ? "border-white/20" : "border-white/[0.08]",
         )}
         style={{
           transformStyle: "preserve-3d",
+          background: theme.surface,
+          filter:
+            isBack && !liteEffects && !prefersReducedMotion
+              ? "blur(1.2px)"
+              : undefined,
           boxShadow: isActive
-            ? `0 0 36px ${platform.accent}55, 0 0 80px ${platform.accent}22, inset 0 1px 0 rgba(255,255,255,0.12)`
-            : "inset 0 1px 0 rgba(255,255,255,0.06)",
+            ? [
+                `0 28px 56px rgba(0,0,0,0.5)`,
+                `0 0 40px ${theme.shadow}`,
+                `inset 0 1px 0 rgba(255,255,255,0.22)`,
+                `inset 0 -1px 0 rgba(255,255,255,0.04)`,
+              ].join(", ")
+            : [
+                `0 18px 40px rgba(0,0,0,0.38)`,
+                `inset 0 1px 0 rgba(255,255,255,0.12)`,
+                `inset 0 -1px 0 rgba(255,255,255,0.03)`,
+              ].join(", "),
         }}
         animate={{
           x: offset * spacing,
-          y,
-          z,
+          y: isActive && hovered ? y - 10 : y,
+          z: isActive && hovered ? z + 16 : z,
           rotateY,
-          scale,
+          scale: isActive && hovered ? 1.03 : scale,
           opacity,
         }}
-        transition={CAROUSEL_SPRING}
-        whileHover={isActive ? { scale: scale * 1.03 } : undefined}
-        whileTap={isActive ? { scale: scale * 0.98 } : undefined}
+        transition={COVERFLOW_SPRING}
+        whileTap={isActive ? { scale: 0.985 } : undefined}
       >
+        {/* Platform wash */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-3xl opacity-40"
-          style={{
-            background: `radial-gradient(circle at 50% 20%, ${platform.accent}33, transparent 60%)`,
-          }}
+          className="pointer-events-none absolute inset-0"
+          style={{ background: theme.wash, opacity: isActive ? 0.95 : 0.7 }}
         />
 
-        <span
-          className={cn(
-            "relative flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] sm:h-16 sm:w-16",
-            isActive && "shadow-[0_0_24px_rgba(0,245,255,0.15)]",
-          )}
-          style={{ color: platform.accent }}
-        >
-          <SocialIcon id={platform.icon} className="h-7 w-7 sm:h-8 sm:w-8" />
-        </span>
+        {/* Dynamic specular (desktop active) */}
+        {enableHoverFX ? (
+          <motion.span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 mix-blend-soft-light"
+            style={{
+              background: glareBackground,
+              opacity: hovered ? 0.9 : 0.45,
+            }}
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 90% 50% at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 55%)",
+            }}
+          />
+        )}
 
-        <div className="relative px-4 text-center">
-          <p className="text-brand text-base font-semibold tracking-wide text-white sm:text-lg">
-            {platform.name}
-          </p>
-          <p className="mt-1 text-xs text-white/50 sm:text-sm">
-            {platform.handle}
-          </p>
-        </div>
+        {/* Top edge specular line */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent"
+        />
+
+        {/* Bottom depth */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-t from-black/45 via-black/10 to-transparent"
+        />
+
+        <motion.div
+          className="relative flex h-full w-full flex-col items-center justify-center gap-4 px-4"
+          animate={
+            isActive && !prefersReducedMotion && !liteEffects
+              ? { y: [0, -6, 0] }
+              : { y: 0 }
+          }
+          transition={
+            isActive && !prefersReducedMotion && !liteEffects
+              ? { duration: 4.6, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 0.3 }
+          }
+        >
+          <span
+            className={cn(
+              "relative flex items-center justify-center rounded-[20px] border border-white/12",
+              "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] lg:h-20 lg:w-20",
+              "bg-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_24px_rgba(0,0,0,0.25)]",
+              isActive && "border-white/18",
+            )}
+            style={{
+              color: theme.accent,
+              boxShadow: isActive
+                ? `inset 0 1px 0 rgba(255,255,255,0.2), 0 0 28px ${theme.shadow}`
+                : undefined,
+            }}
+          >
+            <SocialIcon
+              id={platform.icon}
+              className="h-8 w-8 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
+            />
+          </span>
+
+          <div className="text-center">
+            <p className="text-brand text-base font-semibold tracking-[0.03em] text-white sm:text-lg">
+              {platform.name}
+            </p>
+            <p className="mt-1.5 text-xs tracking-[0.02em] text-white/50 sm:text-sm">
+              {BRAND.handle}
+            </p>
+          </div>
+        </motion.div>
       </motion.a>
     </div>
   );

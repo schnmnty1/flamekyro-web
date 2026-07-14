@@ -1,7 +1,7 @@
 /** Brand identity — shared across metadata, layout, and sections */
 export const BRAND = {
-  name: "FLAMEKYRO",
-  handle: "@FLAMEKYRO",
+  name: "FlameKyro",
+  handle: "@FlameKyro",
   tagline: "Gaming Creator",
   eyebrow: "VALORANT • EPIC CLUTCHES • FUNNY MOMENTS",
   liveLabel: "LIVE DAILY AROUND 10 AM",
