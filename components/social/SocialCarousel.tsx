@@ -29,6 +29,8 @@ import { usePrefersReducedMotion } from "@/hooks";
 /** Continuous auto-scroll — one card every ~2.5s (does not alter drag physics) */
 const AUTO_MS_PER_CARD = 2_500;
 const AUTO_RESUME_MS = 750;
+/** Pointer travel below this is a click (open link); at/above starts drag */
+const CLICK_MOVE_MAX_PX = 5;
 
 /**
  * Social carousel — archived FlameKyro v2 drag pipeline.
@@ -57,6 +59,10 @@ export function SocialCarousel() {
   const autoResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  /** Hard lock while pointer is down — blocks any auto-advance until release */
+  const interactionLockRef = useRef(false);
+  const frozenActiveRef = useRef(0);
+  const frozenOffsetRef = useRef(0);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [liteEffects, setLiteEffects] = useState(false);
@@ -118,14 +124,34 @@ export function SocialCarousel() {
     stopAutoScroll();
   }, [stopAutoScroll]);
 
+  /** Pause + snapshot + paint — position cannot change until interaction ends */
+  const freezeAtCurrentPosition = useCallback(() => {
+    pauseAutoScroll();
+    interactionLockRef.current = true;
+    frozenActiveRef.current = activeRef.current;
+    frozenOffsetRef.current = autoOffsetRef.current;
+    dragOffsetRef.current = frozenOffsetRef.current;
+    renderCarousel(frozenOffsetRef.current);
+  }, [pauseAutoScroll, renderCarousel]);
+
   const startAutoScroll = useCallback(() => {
-    if (prefersReducedMotion || autoPausedRef.current) return;
+    if (
+      prefersReducedMotion ||
+      autoPausedRef.current ||
+      interactionLockRef.current
+    ) {
+      return;
+    }
     stopAutoScroll();
     setAutoScrollingClass(true);
     autoLastTsRef.current = performance.now();
 
     const tick = (now: number) => {
-      if (autoPausedRef.current || draggingRef.current) {
+      if (
+        autoPausedRef.current ||
+        draggingRef.current ||
+        interactionLockRef.current
+      ) {
         autoRafRef.current = 0;
         autoLastTsRef.current = 0;
         setAutoScrollingClass(false);
@@ -161,7 +187,7 @@ export function SocialCarousel() {
     }
     autoResumeTimerRef.current = setTimeout(() => {
       autoResumeTimerRef.current = null;
-      if (draggingRef.current) return;
+      if (draggingRef.current || interactionLockRef.current) return;
       autoPausedRef.current = false;
       startAutoScroll();
     }, AUTO_RESUME_MS);
@@ -205,6 +231,7 @@ export function SocialCarousel() {
   const setActive = useCallback(
     (index: number) => {
       const next = wrapIndex(index, length);
+      interactionLockRef.current = false;
       activeRef.current = next;
       dragOffsetRef.current = 0;
       autoOffsetRef.current = 0;
@@ -222,16 +249,25 @@ export function SocialCarousel() {
       pauseAutoScroll();
       return;
     }
-    autoPausedRef.current = false;
-    startAutoScroll();
+    // Never clear a user/interaction pause when this effect re-runs
+    if (!autoPausedRef.current && !interactionLockRef.current) {
+      startAutoScroll();
+    }
     return () => {
-      stopAutoScroll();
-      if (autoResumeTimerRef.current) {
-        clearTimeout(autoResumeTimerRef.current);
-        autoResumeTimerRef.current = null;
+      // Stop the loop only — keep an in-flight 750ms resume timer intact
+      if (autoRafRef.current) {
+        cancelAnimationFrame(autoRafRef.current);
+        autoRafRef.current = 0;
       }
+      autoLastTsRef.current = 0;
+      setAutoScrollingClass(false);
     };
-  }, [prefersReducedMotion, pauseAutoScroll, startAutoScroll, stopAutoScroll]);
+  }, [
+    prefersReducedMotion,
+    pauseAutoScroll,
+    startAutoScroll,
+    setAutoScrollingClass,
+  ]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
@@ -264,18 +300,16 @@ export function SocialCarousel() {
       const target = event.target as HTMLElement;
       if (target.closest("button, [role='tab']")) return;
 
-      pauseAutoScroll();
+      // Freeze immediately — no further auto-advance until click/drag ends
+      freezeAtCurrentPosition();
 
-      // Continue drag from the live auto-scroll offset — no snap
-      const baseOffset = autoOffsetRef.current;
+      const pointerId = event.pointerId;
       const startX = event.clientX;
-      let dragStart: number | null = startX;
-      dragOffsetRef.current = baseOffset;
-      renderCarousel(baseOffset);
+      const startY = event.clientY;
+      const baseOffset = frozenOffsetRef.current;
+      const baseActive = frozenActiveRef.current;
+      let tracking = true;
       let didDrag = false;
-
-      stageRef.current?.setPointerCapture?.(event.pointerId);
-      event.preventDefault();
 
       const endListeners = () => {
         window.removeEventListener("pointermove", onMove);
@@ -283,23 +317,35 @@ export function SocialCarousel() {
         window.removeEventListener("pointercancel", onUp);
       };
 
-      // Archive pointermove — sync write every event; use coalesced sample for latest dx
+      const finishInteraction = () => {
+        tracking = false;
+        endListeners();
+        draggingRef.current = false;
+        stageRef.current?.classList.remove("is-dragging");
+        try {
+          stageRef.current?.releasePointerCapture?.(pointerId);
+        } catch {
+          /* already released */
+        }
+      };
+
       const onMove = (moveEvent: PointerEvent) => {
-        if (dragStart === null) return;
-        const samples =
-          typeof moveEvent.getCoalescedEvents === "function"
-            ? moveEvent.getCoalescedEvents()
-            : null;
-        const latest =
-          samples && samples.length > 0
-            ? samples[samples.length - 1]
-            : moveEvent;
-        const dx = latest.clientX - startX;
-        if (Math.abs(dx) > 8) {
+        if (!tracking || moveEvent.pointerId !== pointerId) return;
+
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+        const distance = Math.hypot(dx, dy);
+
+        // Stay frozen in click mode until movement exceeds threshold
+        if (!didDrag) {
+          if (distance < CLICK_MOVE_MAX_PX) return;
           didDrag = true;
           draggingRef.current = true;
           stageRef.current?.classList.add("is-dragging");
+          stageRef.current?.setPointerCapture?.(pointerId);
         }
+
+        // Archive drag math — only after confirmed drag
         dragOffsetRef.current = Math.max(
           -DRAG_CLAMP,
           Math.min(DRAG_CLAMP, baseOffset + dx / STEP_PX),
@@ -308,17 +354,27 @@ export function SocialCarousel() {
         moveEvent.preventDefault();
       };
 
-      // Archive pointerup
       const onUp = (upEvent: PointerEvent) => {
-        if (dragStart === null) return;
+        if (!tracking || upEvent.pointerId !== pointerId) return;
         const delta = upEvent.clientX - startX;
-        dragStart = null;
-        endListeners();
-        draggingRef.current = false;
-        stageRef.current?.classList.remove("is-dragging");
+        finishInteraction();
+
+        // Click: restore exact freeze snapshot, then resume after delay
+        if (!didDrag) {
+          activeRef.current = baseActive;
+          autoOffsetRef.current = baseOffset;
+          dragOffsetRef.current = baseOffset;
+          renderCarousel(baseOffset);
+          interactionLockRef.current = false;
+          scheduleAutoResume();
+          return;
+        }
+
+        // Drag: block the synthetic click that would open a link
+        suppressClickRef.current = true;
+        interactionLockRef.current = false;
 
         if (Math.abs(delta) < SNAP_THRESHOLD_PX) {
-          // Keep exact release position — resume auto-scroll from here (no center snap)
           autoOffsetRef.current = dragOffsetRef.current;
           commitAutoWraps();
           dragOffsetRef.current = autoOffsetRef.current;
@@ -327,7 +383,6 @@ export function SocialCarousel() {
           return;
         }
 
-        if (didDrag) suppressClickRef.current = true;
         setActive(activeRef.current + (delta < 0 ? 1 : -1));
       };
 
@@ -337,7 +392,7 @@ export function SocialCarousel() {
     },
     [
       commitAutoWraps,
-      pauseAutoScroll,
+      freezeAtCurrentPosition,
       renderCarousel,
       scheduleAutoResume,
       setActive,

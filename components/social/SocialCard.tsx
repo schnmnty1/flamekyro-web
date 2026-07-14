@@ -51,12 +51,6 @@ export function SocialCard({
       tabIndex={layoutActive ? 0 : -1}
       aria-label={`Open ${platform.name} — ${BRAND.handle}`}
       aria-current={layoutActive ? "true" : undefined}
-      onClick={(event) => {
-        if (!layoutActive) {
-          event.preventDefault();
-          onSelect();
-        }
-      }}
       onKeyDown={(event) => {
         if (!layoutActive && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
