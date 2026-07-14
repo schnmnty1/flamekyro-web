@@ -30,7 +30,7 @@ export function ActiveCardGlow({ platform, lite }: ActiveCardGlowProps) {
       <AnimatePresence mode="sync">
         <motion.div
           key={platform.id}
-          className="absolute h-[240px] w-[240px] rounded-full sm:h-[320px] sm:w-[320px] lg:h-[360px] lg:w-[360px]"
+          className="absolute h-[160px] w-[160px] rounded-full sm:h-[200px] sm:w-[200px] lg:h-[220px] lg:w-[220px]"
           style={{
             background: `radial-gradient(circle, ${theme.glow} 0%, transparent 68%)`,
             filter: lite || prefersReducedMotion ? "blur(28px)" : "blur(48px)",

@@ -10,7 +10,7 @@ export const BRAND = {
 /** External destinations — update when official links are finalized */
 export const LINKS = {
   discord: "https://discord.gg/flamekyro",
-  watchLive: "https://www.twitch.tv/flamekyro",
+  watchLive: `https://www.youtube.com/${BRAND.handle}`,
 } as const;
 
 /** Design tokens mirrored in globals.css for JS consumers */

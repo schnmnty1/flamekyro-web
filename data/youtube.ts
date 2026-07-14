@@ -14,5 +14,8 @@ export const YOUTUBE_CHANNEL = {
 
 export const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
-/** Route / Data API cache window */
+/** Channel / uploads cache window */
 export const YOUTUBE_CACHE_SECONDS = 600;
+
+/** Live broadcast detection cache — must stay fresh */
+export const YOUTUBE_LIVE_CACHE_SECONDS = 60;

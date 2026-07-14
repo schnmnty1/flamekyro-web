@@ -17,7 +17,7 @@ export function LoadingSkeleton({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6",
+        "grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:gap-3.5",
         className,
       )}
       aria-busy="true"
@@ -26,15 +26,14 @@ export function LoadingSkeleton({
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
-          className="glass-panel rounded-2xl p-5 sm:p-6"
+          className="glass-panel rounded-2xl p-3.5 sm:p-4"
         >
           <div className="flex items-start justify-between gap-3">
-            <div className="h-10 w-10 animate-pulse rounded-xl bg-white/10" />
-            <div className="h-5 w-14 animate-pulse rounded-full bg-white/10" />
+            <div className="h-8 w-8 rounded-lg skeleton-shimmer sm:h-9 sm:w-9" />
           </div>
-          <div className="mt-6 h-8 w-28 animate-pulse rounded-md bg-white/10" />
-          <div className="mt-3 h-3 w-20 animate-pulse rounded bg-white/[0.07]" />
-          <div className="mt-2 h-3 w-24 animate-pulse rounded bg-white/[0.06]" />
+          <div className="mt-3 h-6 w-24 rounded-md skeleton-shimmer sm:mt-3.5" />
+          <div className="mt-2 h-3 w-16 rounded skeleton-shimmer" />
+          <div className="mt-1.5 h-2.5 w-20 rounded skeleton-shimmer" />
         </div>
       ))}
       <span className="sr-only">Loading creator stats</span>

@@ -9,36 +9,25 @@ type CarouselInfoProps = {
 };
 
 /**
- * Active platform copy under the carousel.
- * Music unlock hint lives in MusicProvider (not duplicated here).
+ * Active platform handle under the carousel — handle only.
  */
 export function CarouselInfo({ platform }: CarouselInfoProps) {
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-4 text-center">
+    <div className="mx-auto flex w-full max-w-lg justify-center px-4 text-center">
       <AnimatePresence mode="wait">
-        <motion.div
+        <motion.a
           key={platform.id}
-          initial={{ opacity: 0, y: 10 }}
+          href={platform.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
+          exit={{ opacity: 0, y: -4 }}
           transition={SPRING_SOFT}
-          className="space-y-2"
+          className="text-sm tracking-[0.02em] text-glow/70 underline-offset-4 transition-colors duration-300 hover:text-glow hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          <p className="text-brand text-lg font-semibold tracking-[0.02em] text-white/95 sm:text-xl">
-            {platform.name}
-          </p>
-          <p className="text-sm leading-relaxed tracking-[-0.01em] text-white/42 sm:text-base">
-            {platform.description}
-          </p>
-          <a
-            href={platform.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block text-sm tracking-[0.01em] text-glow/75 underline-offset-4 transition-colors duration-300 hover:text-glow hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            {platform.handle}
-          </a>
-        </motion.div>
+          {platform.handle}
+        </motion.a>
       </AnimatePresence>
     </div>
   );

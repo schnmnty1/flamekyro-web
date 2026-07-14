@@ -71,14 +71,14 @@ export const PLATFORM_CARD_THEMES: Record<SocialIconId, PlatformCardTheme> = {
 /** Physical coverflow spring — used for card settle + drag release */
 export const COVERFLOW_SPRING = {
   type: "spring" as const,
-  stiffness: 170,
-  damping: 22,
-  mass: 0.85,
+  stiffness: 190,
+  damping: 26,
+  mass: 0.78,
 };
 
 export const DRAG_RELEASE_SPRING = {
   type: "spring" as const,
-  stiffness: 200,
-  damping: 24,
-  mass: 0.7,
+  stiffness: 220,
+  damping: 28,
+  mass: 0.68,
 };

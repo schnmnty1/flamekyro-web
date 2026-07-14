@@ -13,14 +13,14 @@ const sectionContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.06,
+      staggerChildren: 0.06,
+      delayChildren: 0.04,
     },
   },
 };
 
 const sectionItem = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 14 },
   visible: {
     opacity: 1,
     y: 0,
@@ -44,41 +44,40 @@ export function StatsSection() {
   return (
     <section
       aria-labelledby="stats-heading"
-      className="relative z-10 overflow-x-clip pb-20 pt-6 sm:pb-28 sm:pt-10"
+      className="section-band section-rule relative z-10 overflow-x-clip pb-5 sm:pb-6"
     >
       <motion.div
         className="container-page"
         variants={prefersReducedMotion ? undefined : sectionContainer}
         initial={prefersReducedMotion ? undefined : "hidden"}
         whileInView={prefersReducedMotion ? undefined : "visible"}
-        viewport={{ once: true, amount: 0.15 }}
+        viewport={{ once: true, amount: 0.12 }}
       >
         <motion.div
           variants={prefersReducedMotion ? undefined : sectionItem}
-          className="mx-auto mb-10 max-w-2xl text-center sm:mb-12"
+          className="mx-auto mb-3 max-w-2xl text-center sm:mb-3.5"
         >
           <h2
             id="stats-heading"
-            className="text-display text-sm uppercase tracking-[0.38em] text-white/48 sm:text-base"
+            className="text-section"
           >
             {STATS_SECTION.heading}
           </h2>
-          <p className="text-brand mt-3 text-sm tracking-[0.01em] text-white/45 sm:text-base">
-            {STATS_SECTION.subtitle}
-          </p>
         </motion.div>
 
         {showLiveGrid ? (
           <motion.div
             variants={prefersReducedMotion ? undefined : sectionContainer}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6"
+            initial={prefersReducedMotion ? false : "hidden"}
+            animate={prefersReducedMotion ? undefined : "visible"}
+            className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:gap-3.5"
           >
             {stats.map((stat) => (
               <StatCard key={stat.id} stat={stat} />
             ))}
           </motion.div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <p
               className="text-center text-sm tracking-[0.04em] text-white/40"
               role="status"

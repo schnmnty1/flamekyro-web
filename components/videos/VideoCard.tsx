@@ -5,7 +5,7 @@ import { motion, useMotionTemplate, useMotionValue, useSpring } from "framer-mot
 import { Play } from "lucide-react";
 import { usePrefersReducedMotion } from "@/hooks";
 import { cn } from "@/lib/cn";
-import { SPRING_SOFT } from "@/lib/motion";
+import { SPRING_LIFT, SPRING_SOFT } from "@/lib/motion";
 import type { VideoItem } from "@/types/video";
 
 type VideoCardProps = {
@@ -18,10 +18,10 @@ type VideoCardProps = {
 export function VideoCard({ video }: VideoCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const glareX = useMotionValue(50);
-  const glareY = useMotionValue(20);
-  const glareXSpring = useSpring(glareX, { stiffness: 220, damping: 30 });
-  const glareYSpring = useSpring(glareY, { stiffness: 220, damping: 30 });
-  const glare = useMotionTemplate`radial-gradient(320px circle at ${glareXSpring}% ${glareYSpring}%, rgba(255,255,255,0.22) 0%, transparent 55%)`;
+  const glareY = useMotionValue(18);
+  const glareXSpring = useSpring(glareX, { stiffness: 260, damping: 32 });
+  const glareYSpring = useSpring(glareY, { stiffness: 260, damping: 32 });
+  const glare = useMotionTemplate`radial-gradient(340px circle at ${glareXSpring}% ${glareYSpring}%, rgba(255,255,255,0.26) 0%, rgba(0,245,255,0.06) 35%, transparent 58%)`;
 
   return (
     <motion.a
@@ -30,13 +30,16 @@ export function VideoCard({ video }: VideoCardProps) {
       rel="noopener noreferrer"
       aria-label={`Watch ${video.title}`}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[22px]",
-        "border border-white/[0.08] bg-white/[0.03]",
-        "shadow-[0_18px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)]",
+        "group relative flex flex-col overflow-hidden rounded-[18px]",
+        "border border-white/[0.09] bg-white/[0.028]",
+        "shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_20px_48px_rgba(0,0,0,0.42),0_2px_8px_rgba(0,0,0,0.22)]",
+        "transition-[border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "hover:border-white/[0.14]",
+        "hover:shadow-[0_1px_0_rgba(255,255,255,0.14)_inset,0_28px_56px_rgba(0,0,0,0.5),0_0_40px_rgba(0,245,255,0.06)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
       variants={{
-        hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 28 },
+        hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 22 },
         visible: {
           opacity: 1,
           y: 0,
@@ -46,7 +49,7 @@ export function VideoCard({ video }: VideoCardProps) {
       whileHover={
         prefersReducedMotion
           ? undefined
-          : { y: -8, transition: { type: "spring", stiffness: 320, damping: 24 } }
+          : { y: -6, transition: SPRING_LIFT }
       }
       onPointerMove={(event) => {
         if (prefersReducedMotion) return;
@@ -56,28 +59,36 @@ export function VideoCard({ video }: VideoCardProps) {
       }}
       onPointerLeave={() => {
         glareX.set(50);
-        glareY.set(20);
+        glareY.set(18);
       }}
     >
-      {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden bg-surface">
+      {/* Thumbnail — ~25% shorter than full 16:9 */}
+      <div className="relative aspect-[16/6.75] overflow-hidden bg-surface">
         <Image
           src={video.thumbnail}
           alt=""
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 ease-out will-change-transform group-hover:scale-105"
+          className={cn(
+            "object-cover will-change-transform",
+            "transition-[transform,filter] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "group-hover:scale-[1.045] group-hover:brightness-[1.06]",
+          )}
           loading="lazy"
         />
 
-        {/* Scrim */}
+        {/* Edge vignette + depth */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-black/25"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(0,0,0,0.35)_100%)]"
         />
 
         {/* Duration */}
-        <span className="absolute right-3 bottom-3 rounded-md border border-white/10 bg-black/65 px-2 py-0.5 text-[0.65rem] font-medium tracking-wide text-white/90 backdrop-blur-md">
+        <span className="absolute right-2.5 bottom-2.5 rounded-md border border-white/12 bg-black/55 px-1.5 py-0.5 text-[0.65rem] font-medium tracking-[0.04em] text-white/92 shadow-[0_4px_12px_rgba(0,0,0,0.35)] backdrop-blur-md">
           {video.duration}
         </span>
 
@@ -85,14 +96,16 @@ export function VideoCard({ video }: VideoCardProps) {
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-1/2 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center",
-            "rounded-full border border-white/20 bg-black/45 text-white backdrop-blur-md",
-            "shadow-[0_8px_28px_rgba(0,0,0,0.4)] transition-[box-shadow,transform,background-color] duration-300",
-            "group-hover:bg-black/35 group-hover:shadow-[0_0_28px_rgba(0,245,255,0.35),0_8px_28px_rgba(0,0,0,0.35)]",
+            "absolute top-1/2 left-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center sm:h-12 sm:w-12",
+            "rounded-full border border-white/22 bg-black/48 text-white backdrop-blur-md",
+            "shadow-[0_10px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.18)]",
+            "transition-[box-shadow,transform,background-color,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "group-hover:border-white/30 group-hover:bg-black/38",
+            "group-hover:shadow-[0_0_32px_rgba(0,245,255,0.28),0_10px_28px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.22)]",
             !prefersReducedMotion && "group-hover:scale-110",
           )}
         >
-          <Play className="h-5 w-5 translate-x-px fill-current" />
+          <Play className="h-4 w-4 translate-x-px fill-current drop-shadow-sm" />
         </span>
 
         {/* Hover reflection */}
@@ -106,18 +119,18 @@ export function VideoCard({ video }: VideoCardProps) {
       </div>
 
       {/* Glass info */}
-      <div className="relative border-t border-white/[0.06] bg-white/[0.04] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
+      <div className="relative border-t border-white/[0.07] bg-gradient-to-b from-white/[0.055] to-white/[0.025] px-3.5 py-2.5 backdrop-blur-xl sm:px-4 sm:py-3">
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/28 to-transparent"
         />
-        <h3 className="text-brand line-clamp-2 text-sm font-semibold tracking-[0.01em] text-white/95 sm:text-[0.95rem]">
+        <h3 className="text-brand line-clamp-2 text-sm font-semibold leading-snug tracking-[0.01em] text-white/[0.96] sm:text-[0.9rem]">
           {video.title}
         </h3>
-        <p className="mt-2 text-xs tracking-[0.01em] text-white/45 sm:text-[0.8rem]">
+        <p className="mt-1 text-xs tracking-[0.02em] text-white/42 sm:text-[0.75rem]">
           <span>{video.views} views</span>
-          <span className="mx-2 text-white/25" aria-hidden="true">
-            •
+          <span className="mx-2 text-white/22" aria-hidden="true">
+            ·
           </span>
           <span>{video.uploadedAt}</span>
         </p>

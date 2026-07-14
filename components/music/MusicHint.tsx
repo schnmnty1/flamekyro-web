@@ -7,7 +7,7 @@ import { usePrefersReducedMotion } from "@/hooks";
 import { SPRING_SOFT } from "@/lib/motion";
 
 /**
- * Bottom-center unlock hint — visible until first user gesture starts audio.
+ * Bottom-right unlock hint — same corner as MusicController, never overlaps content.
  */
 export function MusicHint() {
   const { unlocked } = useMusic();
@@ -20,21 +20,21 @@ export function MusicHint() {
           key="music-hint"
           role="status"
           aria-live="polite"
-          initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+          initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96 }}
           transition={SPRING_SOFT}
-          className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4 sm:bottom-8"
+          className="pointer-events-none fixed right-4 bottom-4 z-[60] sm:right-6 sm:bottom-6"
         >
           <div
             className={
               reducedMotion
-                ? "glass-panel inline-flex items-center gap-2.5 rounded-full px-4 py-2.5 text-xs tracking-[0.2em] text-white/68 uppercase sm:text-[0.7rem]"
-                : "glass-panel music-hint-pulse inline-flex items-center gap-2.5 rounded-full px-4 py-2.5 text-xs tracking-[0.2em] text-white/68 uppercase sm:text-[0.7rem]"
+                ? "glass-panel inline-flex max-w-[11.5rem] items-center gap-2 rounded-2xl px-3 py-2 text-[0.65rem] tracking-[0.14em] text-white/68 uppercase sm:max-w-none sm:text-[0.7rem]"
+                : "glass-panel music-hint-pulse inline-flex max-w-[11.5rem] items-center gap-2 rounded-2xl px-3 py-2 text-[0.65rem] tracking-[0.14em] text-white/68 uppercase sm:max-w-none sm:text-[0.7rem]"
             }
           >
-            <Music2 className="h-3.5 w-3.5 text-glow/75" aria-hidden />
-            <span>Click anywhere to start music</span>
+            <Music2 className="h-3.5 w-3.5 shrink-0 text-glow/75" aria-hidden />
+            <span className="leading-snug">Start music</span>
           </div>
         </motion.div>
       ) : null}

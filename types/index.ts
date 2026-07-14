@@ -12,7 +12,6 @@ export type {
   VideosSnapshot,
   VideosSource,
 } from "./video";
-export type { AboutBadge, AboutProfile } from "./about";
 export type {
   CreatorStatsAdapter,
   CreatorStatsSnapshot,
@@ -24,7 +23,13 @@ export type {
   StatTrend,
   StatTrendDirection,
 } from "./stats";
-export type { YouTubeApiPayload, YouTubeChannelMetrics } from "./youtube";
+export type {
+  YouTubeApiPayload,
+  YouTubeChannelMetrics,
+  YouTubeLiveOffline,
+  YouTubeLiveOnline,
+  YouTubeLiveStatus,
+} from "./youtube";
 
 /** Shared layout contract for page shells */
 export type PageLayoutProps = {

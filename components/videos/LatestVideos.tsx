@@ -14,14 +14,14 @@ const sectionContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.08,
+      staggerChildren: 0.07,
+      delayChildren: 0.05,
     },
   },
 };
 
 const sectionItem = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 14 },
   visible: {
     opacity: 1,
     y: 0,
@@ -45,28 +45,25 @@ export function LatestVideos() {
   return (
     <section
       aria-labelledby="latest-videos-heading"
-      className="relative z-10 overflow-x-clip pb-20 pt-6 sm:pb-28 sm:pt-10"
+      className="section-band section-rule relative z-10 overflow-x-clip"
     >
       <motion.div
         className="container-page"
         variants={prefersReducedMotion ? undefined : sectionContainer}
         initial={prefersReducedMotion ? undefined : "hidden"}
         whileInView={prefersReducedMotion ? undefined : "visible"}
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: true, amount: 0.15 }}
       >
         <motion.div
           variants={prefersReducedMotion ? undefined : sectionItem}
-          className="mx-auto mb-10 max-w-2xl text-center sm:mb-12"
+          className="mx-auto mb-3 max-w-2xl text-center sm:mb-3.5"
         >
           <h2
             id="latest-videos-heading"
-            className="text-display text-sm uppercase tracking-[0.38em] text-white/48 sm:text-base"
+            className="text-section"
           >
             {VIDEOS_SECTION.heading}
           </h2>
-          <p className="text-brand mt-3 text-sm tracking-[0.01em] text-white/45 sm:text-base">
-            {VIDEOS_SECTION.subtitle}
-          </p>
         </motion.div>
 
         {showLiveGrid ? (
@@ -76,14 +73,14 @@ export function LatestVideos() {
             // Animate this grid on mount so cards are not left at variants.hidden (opacity: 0).
             initial={prefersReducedMotion ? false : "hidden"}
             animate={prefersReducedMotion ? undefined : "visible"}
-            className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 lg:gap-4"
           >
             {videos.map((video) => (
               <VideoCard key={video.id} video={video} />
             ))}
           </motion.div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <p
               className="text-center text-sm tracking-[0.04em] text-white/40"
               role="status"
@@ -97,14 +94,14 @@ export function LatestVideos() {
 
         <motion.div
           variants={prefersReducedMotion ? undefined : sectionItem}
-          className="mt-10 flex justify-center sm:mt-12"
+          className="mt-4 flex justify-center sm:mt-5"
         >
           <GlassButton
             href={VIDEOS_INDEX_URL}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="View all FlameKyro videos on YouTube"
-            className="min-h-11 px-8 text-sm tracking-[0.12em] uppercase"
+            className="min-h-10 px-7 text-sm tracking-[0.12em] uppercase"
           >
             View All Videos
           </GlassButton>

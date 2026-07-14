@@ -14,7 +14,7 @@ export function VideoSkeleton({ className, count = 3 }: VideoSkeletonProps) {
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7",
+        "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 lg:gap-4",
         className,
       )}
       aria-busy="true"
@@ -23,16 +23,17 @@ export function VideoSkeleton({ className, count = 3 }: VideoSkeletonProps) {
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
-          className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-white/[0.03] shadow-[0_18px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)]"
+          className="overflow-hidden rounded-[18px] border border-white/[0.08] bg-white/[0.028] shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_18px_40px_rgba(0,0,0,0.38)]"
+          style={{ animationDelay: `${index * 90}ms` }}
         >
-          <div className="relative aspect-video animate-pulse bg-white/[0.06]">
-            <div className="absolute top-1/2 left-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10" />
-            <div className="absolute right-3 bottom-3 h-5 w-12 rounded-md bg-white/10" />
+          <div className="relative aspect-[16/6.75] skeleton-shimmer">
+            <div className="absolute top-1/2 left-1/2 h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-white/[0.08]" />
+            <div className="absolute right-2.5 bottom-2.5 h-5 w-12 rounded-md bg-white/10" />
           </div>
-          <div className="border-t border-white/[0.06] bg-white/[0.04] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
-            <div className="h-4 w-[85%] animate-pulse rounded bg-white/10" />
-            <div className="mt-2 h-4 w-[60%] animate-pulse rounded bg-white/[0.07]" />
-            <div className="mt-3 h-3 w-32 animate-pulse rounded bg-white/[0.06]" />
+          <div className="border-t border-white/[0.06] bg-gradient-to-b from-white/[0.05] to-transparent px-3.5 py-2.5 sm:px-4 sm:py-3">
+            <div className="h-3.5 w-[85%] rounded skeleton-shimmer" />
+            <div className="mt-2 h-3 w-[58%] rounded skeleton-shimmer" />
+            <div className="mt-2 h-2.5 w-24 rounded skeleton-shimmer" />
           </div>
         </div>
       ))}

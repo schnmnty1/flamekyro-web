@@ -7,9 +7,14 @@ import {
   YOUTUBE_API_BASE,
   YOUTUBE_CACHE_SECONDS,
   YOUTUBE_CHANNEL,
+  YOUTUBE_LIVE_CACHE_SECONDS,
 } from "@/data/youtube";
 import type { VideoItem } from "@/types/video";
-import type { YouTubeApiPayload, YouTubeChannelMetrics } from "@/types/youtube";
+import type {
+  YouTubeApiPayload,
+  YouTubeChannelMetrics,
+  YouTubeLiveStatus,
+} from "@/types/youtube";
 
 type YoutubeThumbnails = {
   maxres?: { url: string };
@@ -44,9 +49,10 @@ function youtubeUrl(
 async function youtubeFetch<T>(
   path: string,
   params: Record<string, string | number | undefined>,
+  revalidateSeconds: number = YOUTUBE_CACHE_SECONDS,
 ): Promise<T> {
   const response = await fetch(youtubeUrl(path, params), {
-    next: { revalidate: YOUTUBE_CACHE_SECONDS },
+    next: { revalidate: revalidateSeconds },
   });
 
   if (!response.ok) {
@@ -175,6 +181,49 @@ type VideosListResponse = {
   }>;
 };
 
+type LiveSearchResponse = {
+  items?: Array<{
+    id?: { videoId?: string };
+    snippet?: {
+      title?: string;
+      thumbnails?: YoutubeThumbnails;
+    };
+  }>;
+};
+
+/**
+ * Detect an active YouTube Live broadcast for the channel.
+ * Uses search.list with eventType=live — no fabricated viewer counts.
+ */
+async function fetchLiveStatus(channelId: string): Promise<YouTubeLiveStatus> {
+  const result = await youtubeFetch<LiveSearchResponse>(
+    "search",
+    {
+      part: "snippet",
+      channelId,
+      eventType: "live",
+      type: "video",
+      maxResults: 1,
+    },
+    YOUTUBE_LIVE_CACHE_SECONDS,
+  );
+
+  const item = result.items?.[0];
+  const videoId = item?.id?.videoId;
+  if (!videoId) {
+    return { isLive: false };
+  }
+
+  return {
+    isLive: true,
+    title: item.snippet?.title?.trim() || "Live",
+    videoId,
+    thumbnail: pickThumbnail(item.snippet?.thumbnails),
+    watching: null,
+    url: `https://www.youtube.com/watch?v=${videoId}`,
+  };
+}
+
 async function resolveChannel(): Promise<{
   channel: YouTubeChannelMetrics;
   uploadsPlaylistId: string;
@@ -291,18 +340,19 @@ async function fetchLatestUploads(
 }
 
 /**
- * Full channel + latest uploads bundle for the landing page.
+ * Full channel + latest uploads + live status for the landing page.
  */
 export async function fetchYouTubeBundle(): Promise<YouTubeApiPayload> {
   const { channel, uploadsPlaylistId } = await resolveChannel();
-  const videos = await fetchLatestUploads(
-    uploadsPlaylistId,
-    YOUTUBE_CHANNEL.latestCount,
-  );
+  const [videos, live] = await Promise.all([
+    fetchLatestUploads(uploadsPlaylistId, YOUTUBE_CHANNEL.latestCount),
+    fetchLiveStatus(channel.id),
+  ]);
 
   return {
     channel,
     videos,
+    live,
     fetchedAt: new Date().toISOString(),
   };
 }

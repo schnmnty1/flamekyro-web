@@ -44,7 +44,7 @@ export function Navbar() {
             y: layer.y,
             transformStyle: "preserve-3d",
           }}
-          className="glass-panel mt-4 flex items-center justify-between gap-4 rounded-2xl px-4 py-3 will-change-transform sm:px-5"
+          className="glass-panel mt-3 flex items-center justify-between gap-4 rounded-2xl px-4 py-2.5 will-change-transform sm:mt-3.5 sm:px-5 sm:py-3"
         >
           <a
             href="/"
@@ -54,10 +54,10 @@ export function Navbar() {
               aria-hidden="true"
               className="relative flex h-8 w-8 items-center justify-center"
             >
-              <span className="absolute inset-0 rounded-full bg-glow/25 blur-md transition-opacity duration-300 group-hover:opacity-100" />
-              <span className="relative h-3.5 w-3.5 rounded-full bg-glow shadow-[0_0_10px_rgba(0,245,255,0.75),0_0_24px_rgba(0,245,255,0.35)]" />
+              <span className="absolute inset-0 rounded-full bg-glow/22 blur-md opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
+              <span className="relative h-3.5 w-3.5 rounded-full bg-glow shadow-[0_0_12px_rgba(0,245,255,0.7),0_0_28px_rgba(0,245,255,0.28)]" />
             </span>
-            <span className="text-brand text-sm font-semibold tracking-[0.12em] text-white/95 sm:text-[0.95rem]">
+            <span className="text-brand text-sm font-semibold tracking-[0.14em] text-white/[0.96] sm:text-[0.95rem]">
               {BRAND.name}
             </span>
           </a>

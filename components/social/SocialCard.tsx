@@ -44,7 +44,7 @@ export function SocialCard({
   const isSide = abs === 1;
   const isBack = abs >= 2;
 
-  const spacing = isCompact ? 124 : 220;
+  const spacing = isCompact ? 100 : 160;
   const rotateY = offset * (isCompact ? -26 : -34);
   const scale = isActive ? 1 : isSide ? 0.9 : Math.max(0.82, 1 - abs * 0.09);
   const z = isActive ? 48 : -abs * (isCompact ? 80 : 120);
@@ -133,7 +133,7 @@ export function SocialCard({
         }}
         className={cn(
           "relative block overflow-hidden will-change-transform",
-          "h-[220px] w-[150px] sm:h-[280px] sm:w-[200px] lg:h-[320px] lg:w-[230px]",
+          "h-[148px] w-[100px] sm:h-[174px] sm:w-[124px] lg:h-[184px] lg:w-[132px]",
           "rounded-[26px] border backdrop-blur-[24px] backdrop-saturate-150",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/65 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isActive ? "border-white/20" : "border-white/[0.08]",
@@ -147,23 +147,23 @@ export function SocialCard({
               : undefined,
           boxShadow: isActive
             ? [
-                `0 28px 56px rgba(0,0,0,0.5)`,
-                `0 0 40px ${theme.shadow}`,
-                `inset 0 1px 0 rgba(255,255,255,0.22)`,
-                `inset 0 -1px 0 rgba(255,255,255,0.04)`,
+                `0 32px 64px rgba(0,0,0,0.52)`,
+                `0 0 48px ${theme.shadow}`,
+                `inset 0 1px 0 rgba(255,255,255,0.24)`,
+                `inset 0 -1px 0 rgba(255,255,255,0.05)`,
               ].join(", ")
             : [
-                `0 18px 40px rgba(0,0,0,0.38)`,
-                `inset 0 1px 0 rgba(255,255,255,0.12)`,
+                `0 20px 44px rgba(0,0,0,0.4)`,
+                `inset 0 1px 0 rgba(255,255,255,0.13)`,
                 `inset 0 -1px 0 rgba(255,255,255,0.03)`,
               ].join(", "),
         }}
         animate={{
           x: offset * spacing,
-          y: isActive && hovered ? y - 10 : y,
-          z: isActive && hovered ? z + 16 : z,
+          y: isActive && hovered ? y - 8 : y,
+          z: isActive && hovered ? z + 14 : z,
           rotateY,
-          scale: isActive && hovered ? 1.03 : scale,
+          scale: isActive && hovered ? 1.025 : scale,
           opacity,
         }}
         transition={COVERFLOW_SPRING}
@@ -210,22 +210,22 @@ export function SocialCard({
         />
 
         <motion.div
-          className="relative flex h-full w-full flex-col items-center justify-center gap-4 px-4"
+          className="relative flex h-full w-full flex-col items-center justify-center gap-2.5 px-3 sm:gap-3 sm:px-4"
           animate={
             isActive && !prefersReducedMotion && !liteEffects
-              ? { y: [0, -6, 0] }
+              ? { y: [0, -4, 0] }
               : { y: 0 }
           }
           transition={
             isActive && !prefersReducedMotion && !liteEffects
-              ? { duration: 4.6, repeat: Infinity, ease: "easeInOut" }
-              : { duration: 0.3 }
+              ? { duration: 5.2, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 0.28 }
           }
         >
           <span
             className={cn(
-              "relative flex items-center justify-center rounded-[20px] border border-white/12",
-              "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] lg:h-20 lg:w-20",
+              "relative flex items-center justify-center rounded-[16px] border border-white/12 sm:rounded-[18px]",
+              "h-11 w-11 sm:h-[3.25rem] sm:w-[3.25rem] lg:h-14 lg:w-14",
               "bg-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_24px_rgba(0,0,0,0.25)]",
               isActive && "border-white/18",
             )}
@@ -238,15 +238,15 @@ export function SocialCard({
           >
             <SocialIcon
               id={platform.icon}
-              className="h-8 w-8 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
+              className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
             />
           </span>
 
           <div className="text-center">
-            <p className="text-brand text-base font-semibold tracking-[0.03em] text-white sm:text-lg">
+            <p className="text-brand text-sm font-semibold tracking-[0.03em] text-white sm:text-base">
               {platform.name}
             </p>
-            <p className="mt-1.5 text-xs tracking-[0.02em] text-white/50 sm:text-sm">
+            <p className="mt-0.5 text-[0.7rem] tracking-[0.02em] text-white/50 sm:mt-1 sm:text-xs">
               {BRAND.handle}
             </p>
           </div>

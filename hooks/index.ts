@@ -10,3 +10,5 @@ export type {
 export { useCountUp } from "./useCountUp";
 export { useCreatorStats } from "./useCreatorStats";
 export { useLatestVideos } from "./useLatestVideos";
+export { useYouTubeLive } from "./useYouTubeLive";
+export type { HeroLiveView } from "./useYouTubeLive";

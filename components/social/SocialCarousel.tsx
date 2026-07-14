@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useId,
   useRef,
   useState,
   type KeyboardEvent,
@@ -30,7 +29,6 @@ const VISIBLE_RANGE = 2;
  * Premium 3D social coverflow — physical drag, cinematic cards, active glow.
  */
 export function SocialCarousel() {
-  const labelId = useId();
   const stageRef = useRef<HTMLDivElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const suppressClickRef = useRef(false);
@@ -210,30 +208,21 @@ export function SocialCarousel() {
 
   return (
     <section
-      aria-labelledby={labelId}
-      className="relative z-10 overflow-x-clip pb-16 pt-2 sm:pb-24 sm:pt-3"
+      aria-label="Social platforms carousel"
+      className="relative z-10 overflow-x-clip pb-3 pt-0 sm:pb-3.5"
     >
-      <div className="container-page mb-4 text-center sm:mb-5">
-        <h2
-          id={labelId}
-          className="text-display text-sm uppercase tracking-[0.38em] text-white/48 sm:text-base"
-        >
-          Connect
-        </h2>
-      </div>
-
       <div
         ref={regionRef}
         role="region"
         aria-roledescription="carousel"
-        aria-label="Social platforms carousel"
+        aria-label="Social platforms"
         tabIndex={0}
         onKeyDown={handleKeyDown}
         className="outline-none focus-visible:ring-2 focus-visible:ring-glow/50 focus-visible:ring-offset-4 focus-visible:ring-offset-background"
       >
         <div
           ref={stageRef}
-          className="relative z-10 mx-auto h-[280px] w-full max-w-6xl touch-pan-y sm:h-[360px] lg:h-[400px]"
+          className="relative z-10 mx-auto h-[170px] w-full max-w-6xl touch-pan-y sm:h-[200px] lg:h-[210px]"
           style={{ perspective: isCompact ? 1200 : 1700 }}
           onPointerDown={onPointerDown}
           onClickCapture={onClickCapture}
@@ -277,7 +266,7 @@ export function SocialCarousel() {
           </span>
         </div>
 
-        <div className="mt-8 flex flex-col items-center gap-7 sm:mt-10 sm:gap-8">
+        <div className="mt-2.5 flex flex-col items-center gap-2 sm:mt-3 sm:gap-2.5">
           <CarouselPagination
             platforms={SOCIAL_PLATFORMS}
             activeIndex={activeIndex}

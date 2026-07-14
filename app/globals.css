@@ -14,23 +14,25 @@
   --glow: #00f5ff;
   --text: #ffffff;
 
-  /* Derived — softer edges, premium glass */
-  --text-muted: color-mix(in srgb, var(--text) 52%, transparent);
-  --border: color-mix(in srgb, var(--text) 8%, transparent);
-  --border-soft: color-mix(in srgb, var(--text) 6%, transparent);
-  --border-strong: color-mix(in srgb, var(--text) 14%, transparent);
-  --ring: color-mix(in srgb, var(--glow) 45%, transparent);
+  /* Derived — softer edges, denser glass */
+  --text-muted: color-mix(in srgb, var(--text) 50%, transparent);
+  --border: color-mix(in srgb, var(--text) 9%, transparent);
+  --border-soft: color-mix(in srgb, var(--text) 7%, transparent);
+  --border-strong: color-mix(in srgb, var(--text) 15%, transparent);
+  --ring: color-mix(in srgb, var(--glow) 48%, transparent);
 
-  --glass-bg: color-mix(in srgb, var(--surface) 55%, transparent);
-  --glass-bg-strong: color-mix(in srgb, var(--surface) 68%, transparent);
-  --glass-highlight: color-mix(in srgb, var(--text) 14%, transparent);
-  --glass-blur: 22px;
-  --glass-blur-strong: 28px;
+  --glass-bg: color-mix(in srgb, var(--surface) 52%, transparent);
+  --glass-bg-strong: color-mix(in srgb, var(--surface) 70%, transparent);
+  --glass-highlight: color-mix(in srgb, var(--text) 16%, transparent);
+  --glass-blur: 24px;
+  --glass-blur-strong: 32px;
 
+  /* Motion — Linear / Apple-like deceleration */
   --ease-out-premium: cubic-bezier(0.22, 1, 0.36, 1);
-  --duration-fast: 180ms;
-  --duration-base: 280ms;
-  --duration-slow: 420ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 160ms;
+  --duration-base: 260ms;
+  --duration-slow: 480ms;
 
   /* Spatial pointer defaults (updated by SpatialProvider without React state) */
   --pointer-x: 50%;
@@ -105,18 +107,44 @@ body {
 @utility text-display {
   font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
-  letter-spacing: 0.035em;
+  letter-spacing: 0.04em;
   font-feature-settings: "kern" 1;
 }
 
 @utility text-brand {
   font-family: var(--font-primary), ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.012em;
 }
 
 @utility text-body {
   font-family: var(--font-secondary), ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.012em;
+}
+
+/** Section eyebrow / label — shared hierarchy across bands */
+@utility text-section {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 46%, transparent);
+
+  @media (width >= 640px) {
+    font-size: 0.875rem;
+    letter-spacing: 0.42em;
+  }
+}
+
+@utility text-section-sub {
+  font-family: var(--font-primary), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--text) 42%, transparent);
+
+  @media (width >= 640px) {
+    font-size: 1rem;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -150,6 +178,42 @@ body {
   }
 }
 
+/** Dense landing band — near single-screen on 1080p */
+@utility section-band {
+  padding-block: 0.75rem;
+
+  @media (width >= 640px) {
+    padding-block: 0.875rem;
+  }
+
+  @media (width >= 1024px) {
+    padding-block: 1rem;
+  }
+}
+
+/** Soft luminous rule between content bands */
+@utility section-rule {
+  position: relative;
+}
+
+.section-rule::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline: max(1.25rem, 10%);
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--text) 9%, transparent) 24%,
+    color-mix(in srgb, var(--glow) 14%, transparent) 50%,
+    color-mix(in srgb, var(--text) 9%, transparent) 76%,
+    transparent 100%
+  );
+  opacity: 0.85;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Surfaces & glass                                                           */
 /* -------------------------------------------------------------------------- */
@@ -162,37 +226,38 @@ body {
 @utility surface-glass {
   background: linear-gradient(
     165deg,
-    color-mix(in srgb, var(--text) 7%, transparent) 0%,
-    var(--glass-bg) 42%,
+    color-mix(in srgb, var(--text) 8%, transparent) 0%,
+    var(--glass-bg) 40%,
     var(--glass-bg-strong) 100%
   );
   border: 1px solid var(--border-soft);
-  backdrop-filter: blur(var(--glass-blur-strong)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur-strong)) saturate(155%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(155%);
   box-shadow:
     0 1px 0 var(--glass-highlight) inset,
-    0 0 0 1px color-mix(in srgb, var(--text) 3%, transparent) inset,
-    0 12px 40px color-mix(in srgb, #000 35%, transparent),
-    0 2px 8px color-mix(in srgb, #000 20%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--text) 3.5%, transparent) inset,
+    0 16px 48px color-mix(in srgb, #000 38%, transparent),
+    0 2px 8px color-mix(in srgb, #000 22%, transparent);
 }
 
 @utility glass-panel {
   position: relative;
   overflow: hidden;
   background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--text) 8%, transparent) 0%,
-    color-mix(in srgb, var(--surface) 58%, transparent) 45%,
-    color-mix(in srgb, var(--surface) 72%, transparent) 100%
+    155deg,
+    color-mix(in srgb, var(--text) 9%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 55%, transparent) 42%,
+    color-mix(in srgb, var(--surface) 74%, transparent) 100%
   );
   border: 1px solid var(--border-soft);
-  backdrop-filter: blur(var(--glass-blur)) saturate(145%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(145%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(155%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(155%);
   box-shadow:
     0 1px 0 var(--glass-highlight) inset,
+    0 -1px 0 color-mix(in srgb, var(--text) 3%, transparent) inset,
     0 0 0 0.5px color-mix(in srgb, var(--text) 4%, transparent) inset,
-    0 14px 40px color-mix(in srgb, #000 34%, transparent),
-    0 2px 6px color-mix(in srgb, #000 18%, transparent);
+    0 18px 44px color-mix(in srgb, #000 38%, transparent),
+    0 2px 6px color-mix(in srgb, #000 20%, transparent);
 }
 
 .glass-panel::before,
@@ -203,14 +268,20 @@ body {
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(
-    520px circle at var(--pointer-x, 50%) var(--pointer-y, 40%),
-    color-mix(in srgb, var(--text) 14%, transparent) 0%,
-    color-mix(in srgb, var(--glow) 6%, transparent) 28%,
-    transparent 58%
+    560px circle at var(--pointer-x, 50%) var(--pointer-y, 38%),
+    color-mix(in srgb, var(--text) 16%, transparent) 0%,
+    color-mix(in srgb, var(--glow) 7%, transparent) 26%,
+    transparent 56%
   );
-  opacity: 0.55;
+  opacity: 0.5;
   mix-blend-mode: soft-light;
   z-index: 0;
+  transition: opacity var(--duration-base) var(--ease-out-premium);
+}
+
+.glass-panel:hover::before,
+.glass-reflect:hover::before {
+  opacity: 0.72;
 }
 
 .glass-panel > *,
@@ -224,16 +295,17 @@ body {
   overflow: hidden;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--text) 10%, transparent) 0%,
-    color-mix(in srgb, var(--text) 4%, transparent) 100%
+    color-mix(in srgb, var(--text) 11%, transparent) 0%,
+    color-mix(in srgb, var(--text) 3.5%, transparent) 100%
   );
   border: 1px solid var(--border-soft);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   box-shadow:
-    0 1px 0 color-mix(in srgb, var(--text) 14%, transparent) inset,
-    0 10px 28px color-mix(in srgb, #000 24%, transparent),
-    0 1px 2px color-mix(in srgb, #000 16%, transparent);
+    0 1px 0 color-mix(in srgb, var(--text) 16%, transparent) inset,
+    0 0 0 0.5px color-mix(in srgb, var(--text) 4%, transparent) inset,
+    0 12px 32px color-mix(in srgb, #000 28%, transparent),
+    0 1px 2px color-mix(in srgb, #000 18%, transparent);
   transition:
     background-color var(--duration-base) var(--ease-out-premium),
     border-color var(--duration-base) var(--ease-out-premium),
@@ -249,12 +321,17 @@ body {
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(
-    180px circle at var(--pointer-x, 50%) var(--pointer-y, 35%),
-    color-mix(in srgb, var(--text) 18%, transparent) 0%,
-    transparent 55%
+    200px circle at var(--pointer-x, 50%) var(--pointer-y, 32%),
+    color-mix(in srgb, var(--text) 20%, transparent) 0%,
+    transparent 58%
   );
-  opacity: 0.45;
+  opacity: 0.4;
   mix-blend-mode: soft-light;
+  transition: opacity var(--duration-base) var(--ease-out-premium);
+}
+
+.glass-control:hover::before {
+  opacity: 0.65;
 }
 
 .glass-control > * {
@@ -307,17 +384,42 @@ body {
   mask-image: radial-gradient(ellipse at center, black 18%, transparent 72%);
 }
 
-/* Hero title — sharper type, restrained bloom, soft cyan rim */
+/* Hero title — crisp type, restrained bloom, soft cyan rim */
 @utility hero-glow {
   text-shadow:
-    0 1px 0 color-mix(in srgb, var(--text) 22%, transparent),
-    0 0 1px color-mix(in srgb, var(--glow) 55%, transparent),
-    0 0 10px color-mix(in srgb, var(--glow) 22%, transparent),
-    0 0 28px color-mix(in srgb, var(--glow) 10%, transparent),
-    0 8px 32px color-mix(in srgb, #000 45%, transparent);
+    0 1px 0 color-mix(in srgb, var(--text) 18%, transparent),
+    0 0 1px color-mix(in srgb, var(--glow) 50%, transparent),
+    0 0 12px color-mix(in srgb, var(--glow) 18%, transparent),
+    0 0 36px color-mix(in srgb, var(--glow) 8%, transparent),
+    0 12px 40px color-mix(in srgb, #000 50%, transparent);
   -webkit-font-smoothing: antialiased;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Loading shimmer — soft glass pulse, no harsh blink                         */
+/* -------------------------------------------------------------------------- */
+
+@keyframes glass-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+@utility skeleton-shimmer {
+  background-image: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--text) 5%, transparent) 0%,
+    color-mix(in srgb, var(--text) 5%, transparent) 38%,
+    color-mix(in srgb, var(--text) 12%, transparent) 50%,
+    color-mix(in srgb, var(--text) 5%, transparent) 62%,
+    color-mix(in srgb, var(--text) 5%, transparent) 100%
+  );
+  background-size: 220% 100%;
+  animation: glass-shimmer 1.9s var(--ease-out-premium) infinite;
+}
 
 /* Music unlock hint pulse — existing only, softened */
 @keyframes music-hint-pulse {
@@ -333,17 +435,18 @@ body {
     box-shadow:
       0 1px 0 var(--glass-highlight) inset,
       0 8px 28px color-mix(in srgb, #000 28%, transparent),
-      0 0 28px 0 color-mix(in srgb, var(--glow) 16%, transparent);
-    border-color: color-mix(in srgb, var(--glow) 22%, transparent);
+      0 0 28px 0 color-mix(in srgb, var(--glow) 14%, transparent);
+    border-color: color-mix(in srgb, var(--glow) 20%, transparent);
   }
 }
 
 .music-hint-pulse {
-  animation: music-hint-pulse 2.8s var(--ease-out-premium) infinite;
+  animation: music-hint-pulse 3.2s var(--ease-out-premium) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .music-hint-pulse {
+  .music-hint-pulse,
+  .skeleton-shimmer {
     animation: none;
   }
 }

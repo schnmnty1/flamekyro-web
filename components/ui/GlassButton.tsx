@@ -32,11 +32,12 @@ export type GlassButtonProps = GlassButtonAsButton | GlassButtonAsLink;
 
 const baseClass =
   "glass-control inline-flex items-center justify-center gap-2 rounded-full " +
-  "px-4 py-2 text-sm font-medium tracking-[0.02em] text-white/88 " +
-  "hover:border-white/[0.16] hover:bg-white/[0.09] hover:text-white " +
+  "px-4 py-2 text-sm font-medium tracking-[0.03em] text-white/90 " +
+  "hover:border-white/[0.18] hover:bg-white/[0.1] hover:text-white " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/55 " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
   "disabled:pointer-events-none disabled:opacity-50";
+
 
 /**
  * Rounded glassmorphism control — used in Navbar and Hero CTAs.
@@ -51,7 +52,7 @@ export const GlassButton = forwardRef<
   const classes = cn(
     baseClass,
     glow &&
-      "hover:shadow-[0_1px_0_rgba(255,255,255,0.14)_inset,0_0_20px_rgba(0,245,255,0.14),0_8px_28px_rgba(0,0,0,0.28)]",
+      "hover:shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_0_24px_rgba(0,245,255,0.16),0_10px_28px_rgba(0,0,0,0.3)]",
     className,
   );
 

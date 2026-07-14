@@ -3,20 +3,22 @@
 import { motion } from "framer-motion";
 import { GlassButton } from "@/components/ui";
 import { useSpatialLayer } from "@/components/spatial";
-import { BRAND, LINKS } from "@/lib/constants";
+import { useYouTubeLive } from "@/hooks/useYouTubeLive";
+import { BRAND } from "@/lib/constants";
 import { heroContainer, heroHeading, heroItem } from "@/lib/motion";
 
 /**
- * Cinematic hero — brand-first, compact vertical footprint.
- * Subtle pointer tilt (≤2°) on fine-pointer devices only.
+ * Cinematic hero — brand-first, compact vertical footprint for near single-screen.
+ * Live badge + Watch Live wired to real YouTube Live status.
  */
 export function Hero() {
   const layer = useSpatialLayer({ rotate: 2, translate: 10 });
+  const { isLive, statusLabel, liveTitle, watchUrl } = useYouTubeLive();
 
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative z-20 flex items-end justify-center px-5 pb-6 pt-[7.5rem] sm:px-8 sm:pb-8 sm:pt-32 lg:pb-10"
+      className="relative z-20 flex items-end justify-center px-5 pb-1 pt-[4.5rem] sm:px-8 sm:pb-1 sm:pt-[4.9rem] lg:pb-1.5"
       style={{ perspective: 1200 }}
     >
       <motion.div
@@ -35,7 +37,7 @@ export function Hero() {
       >
         <motion.p
           variants={heroItem}
-          className="text-brand mb-4 max-w-md text-[0.65rem] font-medium uppercase tracking-[0.3em] text-white/42 sm:mb-5 sm:text-xs sm:tracking-[0.34em]"
+          className="text-brand mb-1.5 max-w-md text-[0.65rem] font-medium uppercase tracking-[0.32em] text-white/40 sm:mb-2 sm:text-xs sm:tracking-[0.36em]"
         >
           {BRAND.eyebrow}
         </motion.p>
@@ -43,7 +45,7 @@ export function Hero() {
         <motion.h1
           id="hero-heading"
           variants={heroHeading}
-          className="text-display hero-glow max-w-full text-[clamp(2.75rem,12vw,8.5rem)] leading-[0.92] text-white"
+          className="text-display hero-glow max-w-full text-[clamp(2.25rem,8.5vw,4.75rem)] leading-[0.9] text-white"
           style={{ transform: "translateZ(28px)" }}
         >
           {BRAND.name}
@@ -51,30 +53,41 @@ export function Hero() {
 
         <motion.div
           variants={heroItem}
-          className="mt-5 flex items-center gap-2.5 sm:mt-6"
+          className="mt-2 flex flex-col items-center gap-1 sm:mt-2.5"
           style={{ transform: "translateZ(16px)" }}
         >
-          <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500/55 opacity-55" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.55)]" />
-          </span>
-          <p className="text-sm font-medium tracking-[0.04em] text-emerald-400/95 sm:text-base">
-            <span className="sr-only">Live status: </span>
-            {BRAND.liveLabel}
-          </p>
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500/50 opacity-50" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
+            </span>
+            <p className="text-sm font-medium tracking-[0.06em] text-emerald-400/92 sm:text-[0.95rem]">
+              <span className="sr-only">Live status: </span>
+              {statusLabel}
+            </p>
+          </div>
+          {isLive && liveTitle ? (
+            <p className="text-brand max-w-xl line-clamp-1 px-4 text-xs tracking-[0.02em] text-white/45 sm:text-sm">
+              {liveTitle}
+            </p>
+          ) : null}
         </motion.div>
 
         <motion.div
           variants={heroItem}
-          className="mt-5 sm:mt-6"
+          className="mt-2 sm:mt-2.5"
           style={{ transform: "translateZ(20px)" }}
         >
           <GlassButton
-            href={LINKS.watchLive}
+            href={watchUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Watch FlameKyro live"
-            className="min-h-12 px-8 text-sm tracking-[0.14em] uppercase sm:px-10 sm:text-[0.95rem]"
+            aria-label={
+              isLive
+                ? `Watch ${BRAND.name} live on YouTube`
+                : `Open ${BRAND.name} on YouTube`
+            }
+            className="min-h-10 px-7 text-sm tracking-[0.14em] uppercase sm:min-h-11 sm:px-9 sm:text-[0.95rem]"
           >
             Watch Live
           </GlassButton>
