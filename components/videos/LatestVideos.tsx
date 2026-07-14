@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import { VideoCard } from "@/components/videos/VideoCard";
+import { VideoSkeleton } from "@/components/videos/VideoSkeleton";
 import { GlassButton } from "@/components/ui";
-import { LATEST_VIDEOS, VIDEOS_INDEX_URL } from "@/data/videos";
+import { VIDEOS_INDEX_URL, VIDEOS_SECTION } from "@/data/videos";
+import { useLatestVideos } from "@/hooks/useLatestVideos";
 import { usePrefersReducedMotion } from "@/hooks";
 import { SPRING_SOFT, staggerContainer } from "@/lib/motion";
 
@@ -28,10 +30,17 @@ const sectionItem = {
 };
 
 /**
- * Latest Videos — cinematic upload grid below the social carousel.
+ * Latest Videos — cinematic upload grid.
+ * Shows connecting skeletons until a live YouTube adapter provides real uploads.
  */
 export function LatestVideos() {
   const prefersReducedMotion = usePrefersReducedMotion();
+  const { videos, loading, source, error } = useLatestVideos();
+
+  const showLiveGrid = !loading && !error && source === "live" && videos.length > 0;
+  const statusLabel = error
+    ? VIDEOS_SECTION.errorLabel
+    : VIDEOS_SECTION.connectingLabel;
 
   return (
     <section
@@ -53,21 +62,34 @@ export function LatestVideos() {
             id="latest-videos-heading"
             className="text-display text-sm uppercase tracking-[0.38em] text-white/48 sm:text-base"
           >
-            Latest Videos
+            {VIDEOS_SECTION.heading}
           </h2>
           <p className="text-brand mt-3 text-sm tracking-[0.01em] text-white/45 sm:text-base">
-            Latest uploads from FlameKyro
+            {VIDEOS_SECTION.subtitle}
           </p>
         </motion.div>
 
-        <motion.div
-          variants={prefersReducedMotion ? undefined : staggerContainer}
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7"
-        >
-          {LATEST_VIDEOS.map((video) => (
-            <VideoCard key={video.id} video={video} />
-          ))}
-        </motion.div>
+        {showLiveGrid ? (
+          <motion.div
+            variants={prefersReducedMotion ? undefined : staggerContainer}
+            className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7"
+          >
+            {videos.map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))}
+          </motion.div>
+        ) : (
+          <div className="space-y-6">
+            <p
+              className="text-center text-sm tracking-[0.04em] text-white/40"
+              role="status"
+              aria-live="polite"
+            >
+              {statusLabel}
+            </p>
+            <VideoSkeleton count={VIDEOS_SECTION.skeletonCount} />
+          </div>
+        )}
 
         <motion.div
           variants={prefersReducedMotion ? undefined : sectionItem}

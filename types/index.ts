@@ -6,7 +6,25 @@ export type {
   MusicPreferences,
   MusicTrack,
 } from "./music";
-export type { VideoItem } from "./video";
+export type {
+  VideoItem,
+  VideosAdapter,
+  VideosSnapshot,
+  VideosSource,
+} from "./video";
+export type { AboutBadge, AboutProfile } from "./about";
+export type {
+  CreatorStatsAdapter,
+  CreatorStatsSnapshot,
+  CreatorStatsSource,
+  StatCardDefinition,
+  StatCardModel,
+  StatIconId,
+  StatStatus,
+  StatTrend,
+  StatTrendDirection,
+} from "./stats";
+export type { YouTubeApiPayload, YouTubeChannelMetrics } from "./youtube";
 
 /** Shared layout contract for page shells */
 export type PageLayoutProps = {

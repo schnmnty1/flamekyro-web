@@ -12,3 +12,16 @@ export type VideoItem = {
   uploadedAt: string;
   url: string;
 };
+
+export type VideosSource = "pending" | "live";
+
+export type VideosSnapshot = {
+  fetchedAt: string | null;
+  source: VideosSource;
+  videos: readonly VideoItem[];
+};
+
+/** Future YouTube / CMS adapter contract */
+export type VideosAdapter = {
+  fetchLatestVideos: () => Promise<VideosSnapshot>;
+};
