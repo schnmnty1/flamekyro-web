@@ -22,6 +22,12 @@ Fill in `.env.local`:
 |---|---|---|
 | `YOUTUBE_API_KEY` | Yes | Server-only YouTube Data API key for live status, videos, and stats |
 | `NEXT_PUBLIC_SITE_URL` | Recommended in production | Canonical origin for SEO (`https://your-domain.com`) |
+| `UPSTASH_REDIS_REST_URL` | **Required in production** | Durable visitor counters (Upstash Redis REST) |
+| `UPSTASH_REDIS_REST_TOKEN` | **Required in production** | Upstash Redis REST token |
+
+Visitor metrics stored: **unique visitors** (30-day cookie) and **total visits**. The site displays unique visitors only as “Website Visitors”.
+
+Locally, if Upstash is unset, development falls back to `.data/visitors.json`. Production never uses the filesystem store.
 
 ## Optional assets
 

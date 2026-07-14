@@ -13,7 +13,8 @@ type StatOdometerProps = {
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 /**
- * Premium per-digit vertical roll — only glyphs that change animate.
+ * "749.3K" as one typographic unit — tabular nums, shared baseline.
+ * Digits may roll; suffixes stay in the same text run.
  */
 export const StatOdometer = memo(function StatOdometer({
   value,
@@ -27,6 +28,17 @@ export const StatOdometer = memo(function StatOdometer({
     previousRef.current = value;
   }, [value]);
 
+  if (prefersReducedMotion) {
+    return (
+      <span
+        className={cn("text-metric whitespace-nowrap leading-none", className)}
+        aria-label={value}
+      >
+        {value}
+      </span>
+    );
+  }
+
   const width = Math.max(previous.length, value.length);
   const prevPadded = previous.padStart(width, " ");
   const nextPadded = value.padStart(width, " ");
@@ -34,7 +46,7 @@ export const StatOdometer = memo(function StatOdometer({
 
   return (
     <span
-      className={cn("inline-flex items-baseline tabular-nums", className)}
+      className={cn("text-metric whitespace-nowrap leading-none", className)}
       aria-label={value}
     >
       {Array.from({ length: width }, (_, index) => {
@@ -46,7 +58,7 @@ export const StatOdometer = memo(function StatOdometer({
           <OdometerGlyph
             key={`d-${index}`}
             char={nextChar}
-            animate={changed && !prefersReducedMotion}
+            animate={changed}
           />
         );
       })}
@@ -68,23 +80,43 @@ const OdometerGlyph = memo(function OdometerGlyph({
   }
 
   if (!/\d/.test(char)) {
-    return (
-      <span className="inline-block" aria-hidden>
-        {char}
-      </span>
-    );
+    return <span aria-hidden>{char}</span>;
   }
 
   const digit = Number(char);
 
   return (
     <span
-      className="relative inline-block h-[1em] w-[1ch] overflow-hidden align-[-0.12em]"
+      className="relative inline-block overflow-hidden"
+      style={{
+        width: "1ch",
+        height: "1em",
+        lineHeight: 1,
+        verticalAlign: "baseline",
+        fontVariantNumeric: "tabular-nums",
+      }}
       aria-hidden
     >
       <span
-        className="absolute left-0 top-0 flex w-full flex-col will-change-transform"
+        aria-hidden
         style={{
+          display: "inline-block",
+          width: "1ch",
+          height: "1em",
+          lineHeight: 1,
+          visibility: "hidden",
+        }}
+      >
+        0
+      </span>
+      <span
+        className="will-change-transform"
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          lineHeight: 1,
           transform: `translate3d(0, ${-digit}em, 0)`,
           transitionProperty: "transform",
           transitionDuration: animate
@@ -96,7 +128,12 @@ const OdometerGlyph = memo(function OdometerGlyph({
         {DIGITS.map((n) => (
           <span
             key={n}
-            className="flex h-[1em] w-full items-center justify-center leading-none"
+            style={{
+              display: "block",
+              width: "100%",
+              height: "1em",
+              lineHeight: 1,
+            }}
           >
             {n}
           </span>

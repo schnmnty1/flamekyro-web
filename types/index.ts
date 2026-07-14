@@ -30,6 +30,7 @@ export type {
   YouTubeLiveOnline,
   YouTubeLiveStatus,
 } from "./youtube";
+export type { VisitorCountSnapshot, VisitorStore } from "./visitors";
 
 /** Shared layout contract for page shells */
 export type PageLayoutProps = {

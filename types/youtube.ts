@@ -9,6 +9,8 @@ export type YouTubeChannelMetrics = {
   subscriberCount: number;
   videoCount: number;
   viewCount: number;
+  /** ISO channel creation time from YouTube snippet.publishedAt */
+  publishedAt: string | null;
 };
 
 /** Offline — no active YouTube Live broadcast */

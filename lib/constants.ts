@@ -3,7 +3,6 @@ export const BRAND = {
   name: "FlameKyro",
   handle: "@FlameKyro",
   tagline: "Gaming Creator",
-  eyebrow: "VALORANT • EPIC CLUTCHES • FUNNY MOMENTS",
   liveLabel: "LIVE DAILY AROUND 10 AM",
   description:
     "Official FlameKyro website — Valorant clutches, funny moments, and live streams. Watch the latest uploads and catch the grind.",

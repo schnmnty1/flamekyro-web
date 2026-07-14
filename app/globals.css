@@ -27,6 +27,17 @@
   --glass-blur: 24px;
   --glass-blur-strong: 32px;
 
+  /* Radius system — one scale for supporting surfaces */
+  --radius-control: 0.75rem; /* 12px — icon plates */
+  --radius-panel: 1rem; /* 16px — panels / stats / visitor */
+  --radius-pill: 9999px;
+
+  /* Support-surface shadow — quieter than carousel cards */
+  --shadow-panel:
+    0 1px 0 color-mix(in srgb, var(--text) 10%, transparent) inset,
+    0 10px 28px color-mix(in srgb, #000 32%, transparent),
+    0 1px 3px color-mix(in srgb, #000 16%, transparent);
+
   /* Motion — Linear / Apple-like deceleration */
   --ease-out-premium: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -114,6 +125,28 @@ body {
 @utility text-brand {
   font-family: var(--font-primary), ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0.012em;
+}
+
+@utility text-metric {
+  font-family: var(--font-primary), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.02em;
+}
+
+@utility text-panel-label {
+  font-family: var(--font-primary), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--text) 34%, transparent);
+}
+
+@utility text-panel-title {
+  font-family: var(--font-primary), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--text) 86%, transparent);
 }
 
 @utility text-body {
@@ -252,12 +285,41 @@ body {
   border: 1px solid var(--border-soft);
   backdrop-filter: blur(var(--glass-blur)) saturate(155%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(155%);
-  box-shadow:
-    0 1px 0 var(--glass-highlight) inset,
-    0 -1px 0 color-mix(in srgb, var(--text) 3%, transparent) inset,
-    0 0 0 0.5px color-mix(in srgb, var(--text) 4%, transparent) inset,
-    0 18px 44px color-mix(in srgb, #000 38%, transparent),
-    0 2px 6px color-mix(in srgb, #000 20%, transparent);
+  box-shadow: var(--shadow-panel);
+}
+
+@utility radius-panel {
+  border-radius: var(--radius-panel);
+}
+
+@utility radius-pill {
+  border-radius: var(--radius-pill);
+}
+
+@utility panel-pad {
+  padding: 1rem;
+}
+
+@utility icon-plate {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+@utility icon-crisp {
+  display: block;
+  flex-shrink: 0;
+  shape-rendering: geometricPrecision;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .glass-panel::before,

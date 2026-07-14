@@ -141,6 +141,7 @@ type ChannelsListResponse = {
     snippet?: {
       title?: string;
       customUrl?: string;
+      publishedAt?: string;
     };
     statistics?: {
       subscriberCount?: string;
@@ -281,6 +282,7 @@ async function resolveChannel(): Promise<{
       subscriberCount: Number(item.statistics?.subscriberCount ?? 0),
       videoCount: Number(item.statistics?.videoCount ?? 0),
       viewCount: Number(item.statistics?.viewCount ?? 0),
+      publishedAt: item.snippet?.publishedAt ?? null,
     },
   };
 }

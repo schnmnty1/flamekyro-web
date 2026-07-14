@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BRAND, LINKS } from "@/lib/constants";
 import { fetchYouTubeFromApi } from "@/lib/youtube/client";
 import type { YouTubeLiveStatus } from "@/types/youtube";
 
@@ -9,22 +8,20 @@ export type HeroLiveView = {
   isLive: boolean;
   statusLabel: string;
   liveTitle: string | null;
-  watchUrl: string;
 };
 
-const OFFLINE: HeroLiveView = {
+const NOT_LIVE: HeroLiveView = {
   isLive: false,
-  statusLabel: BRAND.liveLabel,
+  statusLabel: "NOT LIVE RIGHT NOW",
   liveTitle: null,
-  watchUrl: LINKS.watchLive,
 };
 
 /**
- * Hero live status from `/api/youtube` (shared in-flight with stats/videos).
- * Defaults to offline UI until the real response arrives — never fakes live.
+ * Hero stream status from `/api/youtube` (shared in-flight with stats/videos).
+ * Defaults to not-live until the real response arrives — never fakes live.
  */
 export function useYouTubeLive(): HeroLiveView {
-  const [view, setView] = useState<HeroLiveView>(OFFLINE);
+  const [view, setView] = useState<HeroLiveView>(NOT_LIVE);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,7 +33,7 @@ export function useYouTubeLive(): HeroLiveView {
       })
       .catch(() => {
         if (cancelled) return;
-        setView(OFFLINE);
+        setView(NOT_LIVE);
       });
 
     return () => {
@@ -49,13 +46,12 @@ export function useYouTubeLive(): HeroLiveView {
 
 function mapLiveToHero(live: YouTubeLiveStatus): HeroLiveView {
   if (!live.isLive) {
-    return OFFLINE;
+    return NOT_LIVE;
   }
 
   return {
     isLive: true,
-    statusLabel: "LIVE NOW",
+    statusLabel: "LIVE ON YOUTUBE",
     liveTitle: live.title,
-    watchUrl: live.url,
   };
 }

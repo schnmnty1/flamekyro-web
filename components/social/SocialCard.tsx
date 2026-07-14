@@ -139,9 +139,8 @@ export function SocialCard({
 
         <SocialIcon
           id={platform.icon}
-          className="coverflow-float relative z-[1] aspect-square h-[65%] w-[65%] shrink-0 drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
+          className="coverflow-float icon-crisp relative z-[1] aspect-square h-[65%] w-[65%] shrink-0 drop-shadow-[0_10px_22px_rgba(0,0,0,0.32)]"
           style={{ color: theme.accent }}
-          preserveAspectRatio="xMidYMid meet"
         />
       </div>
     </a>

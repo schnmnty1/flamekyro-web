@@ -66,10 +66,10 @@ export const StatCard = memo(function StatCard({
         prefersReducedMotion ? undefined : { y: -4, transition: SPRING_LIFT }
       }
       className={cn(
-        "glass-panel group relative overflow-hidden rounded-2xl p-3.5 sm:p-4",
+        "glass-panel radius-panel panel-pad group relative flex flex-col overflow-hidden",
         "border-white/[0.08] transition-[border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
         "hover:border-white/[0.14]",
-        "hover:shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_22px_48px_rgba(0,0,0,0.42),0_0_36px_rgba(0,245,255,0.05)]",
+        "hover:shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_14px_32px_rgba(0,0,0,0.36)]",
       )}
     >
       <span
@@ -85,21 +85,18 @@ export const StatCard = memo(function StatCard({
         className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"
       />
 
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="relative flex items-center justify-between gap-3">
         <span
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/12 bg-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_6px_16px_rgba(0,0,0,0.22)] sm:h-9 sm:w-9 sm:rounded-xl"
+          className="icon-plate sm:h-10 sm:w-10"
           style={{ color: stat.accent }}
         >
-          <StatIcon
-            id={stat.icon}
-            className="h-4 w-4 sm:h-[1.15rem] sm:w-[1.15rem]"
-          />
+          <StatIcon id={stat.icon} className="h-4 w-4" />
         </span>
 
         {stat.trend && !isLoading ? (
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[0.65rem] tracking-wide",
+              "inline-flex items-center gap-1 radius-pill border border-white/10 bg-white/[0.04] px-2 py-1 text-[0.65rem] tracking-wide",
               stat.trend.direction === "up" && "text-emerald-400/90",
               stat.trend.direction === "down" && "text-red-400/90",
               stat.trend.direction === "flat" && "text-white/50",
@@ -111,20 +108,20 @@ export const StatCard = memo(function StatCard({
         ) : null}
       </div>
 
-      <div className="relative mt-3 sm:mt-3.5">
-        <div className="flex items-center gap-2">
+      <div className="relative mt-5 flex flex-1 flex-col justify-end sm:mt-6">
+        <div className="flex items-baseline gap-2">
           {formatted ? (
             <StatOdometer
               value={formatted}
               className={cn(
-                "text-brand text-xl font-semibold tracking-[-0.02em] text-white sm:text-2xl",
+                "text-metric text-brand text-[1.75rem] font-semibold text-white sm:text-[2rem]",
                 isLive && "text-emerald-400",
               )}
             />
           ) : (
             <p
               className={cn(
-                "text-brand text-xl font-semibold tracking-[-0.02em] text-white sm:text-2xl",
+                "text-metric text-brand text-[1.75rem] font-semibold text-white sm:text-[2rem]",
                 isLive && "text-emerald-400",
                 isError && "text-white/50",
               )}
@@ -133,7 +130,7 @@ export const StatCard = memo(function StatCard({
             </p>
           )}
           {isLive ? (
-            <span className="relative flex h-2 w-2" aria-hidden>
+            <span className="relative mb-1.5 flex h-2 w-2" aria-hidden>
               {!prefersReducedMotion ? (
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60 opacity-60" />
               ) : null}
@@ -142,11 +139,11 @@ export const StatCard = memo(function StatCard({
           ) : null}
         </div>
 
-        <h3 className="mt-1.5 text-sm font-medium tracking-[0.03em] text-white/78">
+        <h3 className="mt-2 text-[0.9rem] font-medium tracking-[0.02em] text-white/78 sm:text-[0.95rem]">
           {stat.title}
         </h3>
         {isError ? (
-          <p className="mt-0.5 text-xs tracking-[0.02em] text-white/38">
+          <p className="mt-1 text-xs tracking-[0.02em] text-white/38">
             {stat.errorMessage ?? "Could not load"}
           </p>
         ) : null}
