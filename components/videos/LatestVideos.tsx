@@ -72,6 +72,10 @@ export function LatestVideos() {
         {showLiveGrid ? (
           <motion.div
             variants={prefersReducedMotion ? undefined : staggerContainer}
+            // Videos load after the section's whileInView may already be "visible".
+            // Animate this grid on mount so cards are not left at variants.hidden (opacity: 0).
+            initial={prefersReducedMotion ? false : "hidden"}
+            animate={prefersReducedMotion ? undefined : "visible"}
             className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7"
           >
             {videos.map((video) => (
