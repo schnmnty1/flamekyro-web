@@ -63,8 +63,10 @@ export const pendingCreatorStatsAdapter: CreatorStatsAdapter = {
  * Live YouTube adapter — reads channel metrics via `/api/youtube`.
  */
 export const youtubeCreatorStatsAdapter: CreatorStatsAdapter = {
-  async fetchStats(): Promise<CreatorStatsSnapshot> {
-    const payload = await fetchYouTubeFromApi();
+  async fetchStats(options): Promise<CreatorStatsSnapshot> {
+    const payload = await fetchYouTubeFromApi(
+      options?.signal ? { signal: options.signal } : undefined,
+    );
     return {
       fetchedAt: payload.fetchedAt,
       source: "live",
@@ -89,6 +91,8 @@ export function getCreatorStatsAdapter(): CreatorStatsAdapter {
   return activeAdapter;
 }
 
-export async function fetchCreatorStats(): Promise<CreatorStatsSnapshot> {
-  return getCreatorStatsAdapter().fetchStats();
+export async function fetchCreatorStats(options?: {
+  signal?: AbortSignal;
+}): Promise<CreatorStatsSnapshot> {
+  return getCreatorStatsAdapter().fetchStats(options);
 }

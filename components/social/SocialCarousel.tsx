@@ -3,136 +3,129 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { animate, motion, useMotionValue } from "framer-motion";
 import { ActiveCardGlow } from "@/components/social/ActiveCardGlow";
-import { CarouselInfo } from "@/components/social/CarouselInfo";
 import { CarouselPagination } from "@/components/social/CarouselPagination";
 import { SocialCard } from "@/components/social/SocialCard";
 import {
-  COVERFLOW_SPRING,
-  DRAG_RELEASE_SPRING,
-} from "@/components/social/cardThemes";
-import { useSpatialLayer } from "@/components/spatial";
+  DRAG_CLAMP,
+  PERSPECTIVE_PX,
+  SNAP_THRESHOLD_PX,
+  STEP_PX,
+  applyArchiveCardPaint,
+  paintArchiveCard,
+  signedOffset,
+  wrapIndex,
+} from "@/components/social/archiveCoverflow";
 import { SOCIAL_PLATFORMS } from "@/data/social";
-import { usePrefersReducedMotion, useSocialCarousel } from "@/hooks";
-
-const DRAG_THRESHOLD_PX = 48;
-const VELOCITY_STEP = 720;
-const VISIBLE_RANGE = 2;
+import { usePrefersReducedMotion } from "@/hooks";
 
 /**
- * Premium 3D social coverflow — physical drag, cinematic cards, active glow.
+ * Social carousel — archived FlameKyro v2 drag pipeline.
+ *
+ * Smoothness comes from (matching the archive):
+ * 1. dragOffset = dx / 176
+ * 2. render on every pointermove (no rAF coalesce)
+ * 3. CSS transform transition always on (never transition:none during drag)
  */
 export function SocialCarousel() {
+  const length = SOCIAL_PLATFORMS.length;
   const stageRef = useRef<HTMLDivElement>(null);
-  const regionRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const activeRef = useRef(0);
+  const dragOffsetRef = useRef(0);
+  const draggingRef = useRef(false);
   const suppressClickRef = useRef(false);
-  const dragX = useMotionValue(0);
-  const [isCompact, setIsCompact] = useState(false);
+
+  const [activeIndex, setActiveIndex] = useState(0);
   const [liteEffects, setLiteEffects] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
-
-  const { activeIndex, goTo, next, prev, offsets } = useSocialCarousel({
-    length: SOCIAL_PLATFORMS.length,
-  });
-
-  const spatial = useSpatialLayer({
-    rotate: liteEffects || prefersReducedMotion ? 0 : 1.15,
-    translate: liteEffects || prefersReducedMotion ? 0 : 8,
-  });
-
   const activePlatform = SOCIAL_PLATFORMS[activeIndex];
 
+  /** Archive renderCarousel(offsetShift) — DOM only */
+  const renderCarousel = useCallback(
+    (offsetShift: number) => {
+      for (let i = 0; i < length; i += 1) {
+        const el = cardRefs.current[i];
+        if (!el) continue;
+        const offset = signedOffset(i, activeRef.current, length) + offsetShift;
+        applyArchiveCardPaint(el, paintArchiveCard(offset));
+      }
+    },
+    [length],
+  );
+
+  const setCardRef = useCallback(
+    (index: number, el: HTMLElement | null) => {
+      cardRefs.current[index] = el;
+      if (el && cardRefs.current.filter(Boolean).length === length) {
+        renderCarousel(0);
+      }
+    },
+    [length, renderCarousel],
+  );
+
+  useLayoutEffect(() => {
+    renderCarousel(0);
+  }, [renderCarousel]);
+
   useEffect(() => {
-    const compactMq = window.matchMedia("(max-width: 767px)");
     const coarseMq = window.matchMedia("(pointer: coarse)");
     const hoverMq = window.matchMedia("(hover: hover) and (pointer: fine)");
-
     const sync = () => {
-      setIsCompact(compactMq.matches);
       setLiteEffects(coarseMq.matches || !hoverMq.matches);
     };
     sync();
-    compactMq.addEventListener("change", sync);
     coarseMq.addEventListener("change", sync);
     hoverMq.addEventListener("change", sync);
     return () => {
-      compactMq.removeEventListener("change", sync);
       coarseMq.removeEventListener("change", sync);
       hoverMq.removeEventListener("change", sync);
     };
   }, []);
 
-  useEffect(() => {
-    const root = regionRef.current;
-    if (!root) return;
-    const activeEl = document.activeElement;
-    if (!activeEl || !root.contains(activeEl)) return;
-    if (activeEl.getAttribute("role") === "tab") return;
-
-    const activeCard = root.querySelector<HTMLElement>(`[aria-current="true"]`);
-    activeCard?.focus({ preventScroll: true });
-  }, [activeIndex]);
+  const setActive = useCallback(
+    (index: number) => {
+      const next = wrapIndex(index, length);
+      activeRef.current = next;
+      dragOffsetRef.current = 0;
+      draggingRef.current = false;
+      renderCarousel(0);
+      setActiveIndex(next);
+    },
+    [length, renderCarousel],
+  );
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
+      if (draggingRef.current) return;
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {
         event.preventDefault();
-        next();
+        setActive(activeRef.current + 1);
         return;
       }
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
         event.preventDefault();
-        prev();
+        setActive(activeRef.current - 1);
         return;
       }
       if (event.key === "Home") {
         event.preventDefault();
-        goTo(0);
+        setActive(0);
         return;
       }
       if (event.key === "End") {
         event.preventDefault();
-        goTo(SOCIAL_PLATFORMS.length - 1);
+        setActive(length - 1);
       }
     },
-    [goTo, next, prev],
-  );
-
-  const settleDrag = useCallback(
-    (offsetX: number, velocityX: number) => {
-      const distanceSteps = Math.round(Math.abs(offsetX) / 140);
-      const velocitySteps = Math.round(Math.abs(velocityX) / VELOCITY_STEP);
-      const steps = Math.min(
-        2,
-        Math.max(
-          Math.abs(offsetX) > DRAG_THRESHOLD_PX || Math.abs(velocityX) > 420
-            ? 1
-            : 0,
-          distanceSteps + (Math.abs(velocityX) > 420 ? velocitySteps : 0),
-        ),
-      );
-
-      if (steps > 0) {
-        suppressClickRef.current = true;
-        const forward = offsetX < 0 || velocityX < -420;
-        for (let i = 0; i < steps; i += 1) {
-          if (forward) next();
-          else prev();
-        }
-      }
-
-      void animate(dragX, 0, {
-        ...DRAG_RELEASE_SPRING,
-        velocity: velocityX * 0.12,
-      });
-    },
-    [dragX, next, prev],
+    [length, setActive],
   );
 
   const onPointerDown = useCallback(
@@ -140,79 +133,93 @@ export function SocialCarousel() {
       const target = event.target as HTMLElement;
       if (target.closest("button, [role='tab']")) return;
 
+      // Archive pointerdown
       const startX = event.clientX;
-      const startY = event.clientY;
-      let lastX = startX;
-      let lastT = performance.now();
-      let velocityX = 0;
-      let tracking = true;
-      let decided = false;
-      let isHorizontal: boolean | null = null;
+      let dragStart: number | null = startX;
+      dragOffsetRef.current = 0;
+      let didDrag = false;
 
-      const onMove = (moveEvent: PointerEvent) => {
-        if (!tracking) return;
-        const dx = moveEvent.clientX - startX;
-        const dy = moveEvent.clientY - startY;
+      stageRef.current?.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
 
-        if (isHorizontal === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-          isHorizontal = Math.abs(dx) >= Math.abs(dy);
-          if (!isHorizontal) {
-            tracking = false;
-            dragX.set(0);
-            return;
-          }
-          decided = true;
-          stageRef.current?.setPointerCapture(moveEvent.pointerId);
-        }
-
-        if (!isHorizontal) return;
-
-        moveEvent.preventDefault();
-        const now = performance.now();
-        const dt = Math.max(now - lastT, 1);
-        velocityX = ((moveEvent.clientX - lastX) / dt) * 1000;
-        lastX = moveEvent.clientX;
-        lastT = now;
-        // Physical feel — slight rubber-band past edges of a single step
-        const resisted = Math.tanh(dx / 280) * 180;
-        dragX.set(resisted);
-      };
-
-      const onUp = (upEvent: PointerEvent) => {
-        tracking = false;
+      const endListeners = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         window.removeEventListener("pointercancel", onUp);
+      };
 
-        if (!decided || !isHorizontal) {
-          void animate(dragX, 0, COVERFLOW_SPRING);
+      // Archive pointermove — sync write every event; use coalesced sample for latest dx
+      const onMove = (moveEvent: PointerEvent) => {
+        if (dragStart === null) return;
+        const samples =
+          typeof moveEvent.getCoalescedEvents === "function"
+            ? moveEvent.getCoalescedEvents()
+            : null;
+        const latest =
+          samples && samples.length > 0
+            ? samples[samples.length - 1]
+            : moveEvent;
+        const dx = latest.clientX - dragStart;
+        if (Math.abs(dx) > 8) {
+          didDrag = true;
+          draggingRef.current = true;
+          stageRef.current?.classList.add("is-dragging");
+        }
+        dragOffsetRef.current = Math.max(
+          -DRAG_CLAMP,
+          Math.min(DRAG_CLAMP, dx / STEP_PX),
+        );
+        renderCarousel(dragOffsetRef.current);
+        moveEvent.preventDefault();
+      };
+
+      // Archive pointerup
+      const onUp = (upEvent: PointerEvent) => {
+        if (dragStart === null) return;
+        const delta = upEvent.clientX - dragStart;
+        dragStart = null;
+        endListeners();
+        draggingRef.current = false;
+        stageRef.current?.classList.remove("is-dragging");
+
+        if (Math.abs(delta) < SNAP_THRESHOLD_PX) {
+          dragOffsetRef.current = 0;
+          renderCarousel(0);
           return;
         }
 
-        settleDrag(upEvent.clientX - startX, velocityX);
+        if (didDrag) suppressClickRef.current = true;
+        setActive(activeRef.current + (delta < 0 ? 1 : -1));
       };
 
       window.addEventListener("pointermove", onMove, { passive: false });
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onUp);
     },
-    [dragX, settleDrag],
+    [renderCarousel, setActive],
   );
 
-  const onClickCapture = useCallback((event: React.MouseEvent) => {
+  const onClickCapture = useCallback((event: MouseEvent) => {
     if (!suppressClickRef.current) return;
     event.preventDefault();
     event.stopPropagation();
     suppressClickRef.current = false;
   }, []);
 
+  const goTo = useCallback(
+    (index: number) => {
+      if (draggingRef.current) return;
+      setActive(index);
+    },
+    [setActive],
+  );
+
   return (
     <section
       aria-label="Social platforms carousel"
-      className="relative z-10 overflow-x-clip pb-3 pt-0 sm:pb-3.5"
+      className="relative z-10 overflow-x-clip pb-4 pt-1 sm:pb-5 sm:pt-2"
     >
       <div
-        ref={regionRef}
         role="region"
         aria-roledescription="carousel"
         aria-label="Social platforms"
@@ -222,8 +229,8 @@ export function SocialCarousel() {
       >
         <div
           ref={stageRef}
-          className="relative z-10 mx-auto h-[170px] w-full max-w-6xl touch-pan-y sm:h-[200px] lg:h-[210px]"
-          style={{ perspective: isCompact ? 1200 : 1700 }}
+          className="carousel-stage relative z-10 mx-auto flex min-h-[310px] w-full max-w-[1080px] touch-pan-y items-center justify-center sm:min-h-[360px] lg:min-h-[420px]"
+          style={{ perspective: `${PERSPECTIVE_PX}px` }}
           onPointerDown={onPointerDown}
           onClickCapture={onClickCapture}
         >
@@ -232,47 +239,33 @@ export function SocialCarousel() {
             lite={liteEffects || prefersReducedMotion}
           />
 
-          <motion.div
-            className="relative h-full w-full will-change-transform"
-            style={{
-              x: dragX,
-              rotateX: spatial.rotateX,
-              rotateY: spatial.rotateY,
-              y: spatial.y,
-              transformStyle: "preserve-3d",
-            }}
+          <div
+            className="relative h-[min(44vh,420px)] min-h-[310px] w-full"
+            style={{ transformStyle: "preserve-3d" }}
           >
-            <div
-              className="relative h-full w-full"
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              {SOCIAL_PLATFORMS.map((platform, index) => (
-                <SocialCard
-                  key={platform.id}
-                  platform={platform}
-                  offset={offsets[index] ?? 0}
-                  isActive={index === activeIndex}
-                  visibleRange={VISIBLE_RANGE}
-                  isCompact={isCompact}
-                  liteEffects={liteEffects}
-                  onSelect={() => goTo(index)}
-                />
-              ))}
-            </div>
-          </motion.div>
+            {SOCIAL_PLATFORMS.map((platform, index) => (
+              <SocialCard
+                key={platform.id}
+                platform={platform}
+                layoutActive={index === activeIndex}
+                liteEffects={liteEffects}
+                onBind={(el) => setCardRef(index, el)}
+                onSelect={() => goTo(index)}
+              />
+            ))}
+          </div>
 
           <span className="sr-only" aria-live="polite">
             {activePlatform.name}: {activePlatform.description}
           </span>
         </div>
 
-        <div className="mt-2.5 flex flex-col items-center gap-2 sm:mt-3 sm:gap-2.5">
+        <div className="mt-3 flex justify-center sm:mt-4">
           <CarouselPagination
             platforms={SOCIAL_PLATFORMS}
             activeIndex={activeIndex}
             onSelect={goTo}
           />
-          <CarouselInfo platform={activePlatform} />
         </div>
       </div>
     </section>

@@ -1,13 +1,13 @@
 import type { SocialIconId } from "@/types/social";
 
 /**
- * Carousel-only visual materials — brand palette per platform.
+ * Carousel-only visual materials — saturated brand colors per platform.
  * Separated from link data so art direction can evolve without touching URLs.
  */
 export type PlatformCardTheme = {
-  /** Soft glass body gradient */
+  /** Dominant card body */
   surface: string;
-  /** Rich accent wash (top → bottom) */
+  /** Secondary accent wash / sheen */
   wash: string;
   /** Ambient glow behind the active card */
   glow: string;
@@ -15,70 +15,83 @@ export type PlatformCardTheme = {
   shadow: string;
   /** Icon / specular tint */
   accent: string;
+  /** Icon plate fill */
+  iconPlate: string;
 };
 
 export const PLATFORM_CARD_THEMES: Record<SocialIconId, PlatformCardTheme> = {
   youtube: {
-    surface:
-      "linear-gradient(160deg, rgba(255,255,255,0.10) 0%, rgba(40,12,12,0.55) 48%, rgba(18,8,10,0.72) 100%)",
-    wash: "linear-gradient(145deg, rgba(255,59,48,0.55) 0%, rgba(255,106,61,0.28) 42%, rgba(255,140,70,0.08) 100%)",
-    glow: "rgba(255, 69, 58, 0.42)",
-    shadow: "rgba(255, 59, 48, 0.28)",
-    accent: "#FF5A45",
+    surface: "linear-gradient(155deg, #FF5C5C 0%, #E00B00 42%, #9B0F0F 100%)",
+    wash: "radial-gradient(ellipse 90% 70% at 20% 0%, rgba(255,180,160,0.45) 0%, transparent 55%)",
+    glow: "rgba(255, 45, 45, 0.55)",
+    shadow: "rgba(220, 20, 20, 0.45)",
+    accent: "#FFFFFF",
+    iconPlate: "rgba(0,0,0,0.22)",
   },
   instagram: {
     surface:
-      "linear-gradient(160deg, rgba(255,255,255,0.10) 0%, rgba(36,14,28,0.55) 48%, rgba(16,8,20,0.72) 100%)",
-    wash: "linear-gradient(135deg, rgba(253,29,155,0.50) 0%, rgba(255,120,60,0.32) 40%, rgba(131,58,180,0.28) 100%)",
-    glow: "rgba(255, 110, 90, 0.40)",
-    shadow: "rgba(225, 48, 108, 0.28)",
-    accent: "#FF6B8A",
+      "linear-gradient(145deg, #F58529 0%, #DD2A7B 48%, #8134AF 78%, #515BD4 100%)",
+    wash: "radial-gradient(ellipse 80% 60% at 80% 10%, rgba(255,255,255,0.28) 0%, transparent 50%)",
+    glow: "rgba(225, 48, 108, 0.5)",
+    shadow: "rgba(131, 58, 180, 0.4)",
+    accent: "#FFFFFF",
+    iconPlate: "rgba(255,255,255,0.16)",
   },
   discord: {
-    surface:
-      "linear-gradient(160deg, rgba(255,255,255,0.09) 0%, rgba(18,20,48,0.58) 48%, rgba(10,12,28,0.74) 100%)",
-    wash: "linear-gradient(145deg, rgba(88,101,242,0.55) 0%, rgba(114,137,218,0.22) 50%, transparent 100%)",
-    glow: "rgba(88, 101, 242, 0.45)",
-    shadow: "rgba(88, 101, 242, 0.30)",
-    accent: "#7289DA",
+    surface: "linear-gradient(155deg, #7B86F9 0%, #5865F2 45%, #3C45C0 100%)",
+    wash: "radial-gradient(ellipse 85% 65% at 15% 0%, rgba(180,190,255,0.4) 0%, transparent 55%)",
+    glow: "rgba(88, 101, 242, 0.55)",
+    shadow: "rgba(70, 80, 220, 0.42)",
+    accent: "#FFFFFF",
+    iconPlate: "rgba(0,0,0,0.18)",
   },
   tiktok: {
     surface:
-      "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(22,24,28,0.62) 45%, rgba(8,10,12,0.78) 100%)",
-    wash: "linear-gradient(135deg, rgba(105,201,208,0.35) 0%, rgba(254,44,85,0.18) 55%, transparent 100%)",
-    glow: "rgba(80, 220, 230, 0.38)",
-    shadow: "rgba(254, 44, 85, 0.18)",
-    accent: "#69C9D0",
+      "linear-gradient(150deg, #25F4EE 0%, #121212 38%, #121212 62%, #FE2C55 100%)",
+    wash: "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,255,255,0.2) 0%, transparent 50%)",
+    glow: "rgba(37, 244, 238, 0.4)",
+    shadow: "rgba(254, 44, 85, 0.35)",
+    accent: "#FFFFFF",
+    iconPlate: "rgba(255,255,255,0.1)",
   },
   x: {
-    surface:
-      "linear-gradient(160deg, rgba(255,255,255,0.10) 0%, rgba(24,26,30,0.60) 48%, rgba(10,12,14,0.78) 100%)",
-    wash: "linear-gradient(145deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 45%, transparent 100%)",
-    glow: "rgba(255, 255, 255, 0.28)",
-    shadow: "rgba(255, 255, 255, 0.12)",
-    accent: "#F5F5F7",
+    surface: "linear-gradient(155deg, #3A3A3A 0%, #1A1A1A 48%, #0A0A0A 100%)",
+    wash: "radial-gradient(ellipse 90% 55% at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 55%)",
+    glow: "rgba(255, 255, 255, 0.22)",
+    shadow: "rgba(0, 0, 0, 0.55)",
+    accent: "#FFFFFF",
+    iconPlate: "rgba(255,255,255,0.08)",
   },
   twitch: {
-    surface:
-      "linear-gradient(160deg, rgba(255,255,255,0.09) 0%, rgba(28,16,48,0.58) 48%, rgba(12,8,24,0.74) 100%)",
-    wash: "linear-gradient(145deg, rgba(145,70,255,0.50) 0%, rgba(169,112,255,0.20) 50%, transparent 100%)",
-    glow: "rgba(145, 70, 255, 0.42)",
-    shadow: "rgba(145, 70, 255, 0.28)",
-    accent: "#BF94FF",
+    surface: "linear-gradient(155deg, #BF94FF 0%, #9146FF 42%, #5C1FB8 100%)",
+    wash: "radial-gradient(ellipse 85% 65% at 18% 0%, rgba(230,210,255,0.42) 0%, transparent 55%)",
+    glow: "rgba(145, 70, 255, 0.55)",
+    shadow: "rgba(120, 50, 230, 0.45)",
+    accent: "#FFFFFF",
+    iconPlate: "rgba(0,0,0,0.2)",
   },
 };
 
-/** Physical coverflow spring — used for card settle + drag release */
+/** Kept for any legacy imports — v2 drag pitch is STEP_PX = 176 in v2Coverflow */
+export const CARD_SPACING = {
+  compact: 176,
+  desktop: 176,
+} as const;
+
+/**
+ * Critically damped springs — settle with no bounce / overshoot.
+ * damping ≈ 2 * sqrt(stiffness * mass)
+ */
 export const COVERFLOW_SPRING = {
   type: "spring" as const,
-  stiffness: 190,
-  damping: 26,
-  mass: 0.78,
+  stiffness: 380,
+  damping: 39,
+  mass: 1,
 };
 
 export const DRAG_RELEASE_SPRING = {
   type: "spring" as const,
-  stiffness: 220,
-  damping: 28,
-  mass: 0.68,
+  stiffness: 420,
+  damping: 41,
+  mass: 1,
 };

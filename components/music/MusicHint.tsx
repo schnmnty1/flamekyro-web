@@ -24,7 +24,7 @@ export function MusicHint() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96 }}
           transition={SPRING_SOFT}
-          className="pointer-events-none fixed right-4 bottom-4 z-[60] sm:right-6 sm:bottom-6"
+          className="pointer-events-none fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[60] sm:right-[max(1.5rem,env(safe-area-inset-right))] sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           <div
             className={

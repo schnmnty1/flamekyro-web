@@ -450,3 +450,81 @@ body {
     animation: none;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Coverflow — imperative translate3d engine (no Framer drag)                 */
+/* -------------------------------------------------------------------------- */
+
+.social-coverflow-card {
+  border-color: rgba(255, 255, 255, 0.14);
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
+  /* Transform-only transition on the compositor host */
+  transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+/* filter/opacity live here so transform updates don't re-blur every frame */
+.coverflow-fx-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: inherit;
+  transition:
+    opacity 280ms ease,
+    filter 280ms ease;
+  pointer-events: none;
+}
+
+.coverflow-fx-layer > * {
+  pointer-events: auto;
+}
+
+.social-coverflow-card.is-coverflow-center {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+@keyframes coverflow-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes coverflow-shadow {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    opacity: 0.62;
+    transform: translateX(-50%) translateY(3px);
+  }
+}
+
+.social-coverflow-card.is-coverflow-center .coverflow-float {
+  animation: coverflow-float 4.8s ease-in-out infinite;
+}
+
+.coverflow-under-shadow {
+  animation: coverflow-shadow 4.6s ease-in-out infinite;
+}
+
+.carousel-stage.is-dragging .coverflow-float,
+.carousel-stage.is-dragging .coverflow-under-shadow {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .social-coverflow-card.is-coverflow-center .coverflow-float,
+  .coverflow-under-shadow {
+    animation: none;
+  }
+}

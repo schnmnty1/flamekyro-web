@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FLAMEKYRO | Social Wheel</title>
+    <meta name="description" content="FLAMEKYRO one-page 3D social media carousel." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Inter:wght@500;700;900&family=Orbitron:wght@700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=41" />
+  </head>
+  <body>
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+    <canvas id="ambient-bg" aria-hidden="true"></canvas>
+
+    <main class="page-shell">
+      <header class="top-row">
+        <a class="brand magnetic" href="#" aria-label="FLAMEKYRO home">
+          <span class="brand-dot"></span>
+          FLAMEKYRO
+        </a>
+        <div class="tools">
+          <button class="copy-handle magnetic" type="button" data-copy="@FLAMEKYRO">Copy @FLAMEKYRO</button>
+          <a class="discord-btn magnetic" href="https://discord.com" target="_blank" rel="noreferrer">Join Discord</a>
+        </div>
+      </header>
+
+      <section class="hero-copy" aria-label="FLAMEKYRO social carousel">
+        <p>Valorant • Epic Clutches • Funny Moments</p>
+        <h1>FLAMEKYRO</h1>
+        <div class="hero-subtitle">🔴 Live Daily Around 10 AM</div>
+        <a class="watch-live-btn magnetic" href="https://www.youtube.com/@FLAMEKYRO" target="_blank" rel="noreferrer">🎥 WATCH LIVE</a>
+      </section>
+
+      <section class="carousel-zone" aria-label="Social media carousel">
+        <button class="nav-arrow prev magnetic" type="button" aria-label="Previous platform">‹</button>
+        <div class="carousel" aria-live="polite">
+          <a class="social-card" draggable="false" data-name="YouTube" data-color-a="#ff3434" data-color-b="#ff8a3d" href="https://www.youtube.com/@FLAMEKYRO" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/youtube/000000" alt="YouTube logo" />
+            <span>YouTube</span>
+          </a>
+          <a class="social-card" draggable="false" data-name="Instagram" data-color-a="#ffb13d" data-color-b="#ff3d77" href="https://www.instagram.com/FLAMEKYRO" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/instagram/000000" alt="Instagram logo" />
+            <span>Instagram</span>
+          </a>
+          <a class="social-card" draggable="false" data-name="Facebook" data-color-a="#3aa8ff" data-color-b="#2870ff" href="https://www.facebook.com/FLAMEKYRO" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/facebook/000000" alt="Facebook logo" />
+            <span>Facebook</span>
+          </a>
+          <a class="social-card" draggable="false" data-name="Discord" data-color-a="#9b8cff" data-color-b="#5865f2" href="https://discord.com" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/discord/000000" alt="Discord logo" />
+            <span>Discord</span>
+          </a>
+          <a class="social-card" draggable="false" data-name="TikTok" data-color-a="#25f4ee" data-color-b="#ff0050" href="https://www.tiktok.com/@FLAMEKYRO" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/tiktok/000000" alt="TikTok logo" />
+            <span>TikTok</span>
+          </a>
+          <a class="social-card" draggable="false" data-name="Twitch" data-color-a="#b66cff" data-color-b="#6441a5" href="https://www.twitch.tv/FLAMEKYRO" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/twitch/000000" alt="Twitch logo" />
+            <span>Twitch</span>
+          </a>
+          <a class="social-card" draggable="false" data-name="X / Twitter" data-color-a="#f5f7ff" data-color-b="#8d9aad" href="https://x.com/FLAMEKYRO" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/x/000000" alt="X logo" />
+            <span>X / Twitter</span>
+          </a>
+          <a class="social-card" draggable="false" data-name="Snapchat" data-color-a="#fff45c" data-color-b="#ffcf33" href="https://www.snapchat.com" target="_blank" rel="noreferrer">
+            <img draggable="false" src="https://cdn.simpleicons.org/snapchat/000000" alt="Snapchat logo" />
+            <span>Snapchat</span>
+          </a>
+        </div>
+        <button class="nav-arrow next magnetic" type="button" aria-label="Next platform">›</button>
+      </section>
+
+      <footer class="progress-wrap">
+        <span class="progress-label"><b>YouTube 676+</b> • <b>Instagram 9.5K+</b> • <b>Facebook 936+</b></span>
+        <div class="dots" aria-label="Carousel progress"></div>
+        <p class="status" role="status" aria-live="polite"></p>
+      </footer>
+    </main>
+
+    <audio id="bg-track" src="assets/flamekyro-theme.mp3" preload="auto" autoplay loop></audio>
+
+    <script src="script.js?v=43"></script>
+  </body>
+</html>

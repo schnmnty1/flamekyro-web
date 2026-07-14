@@ -8,6 +8,7 @@ import {
   YOUTUBE_CACHE_SECONDS,
   YOUTUBE_CHANNEL,
   YOUTUBE_LIVE_CACHE_SECONDS,
+  YOUTUBE_STATS_CACHE_SECONDS,
 } from "@/data/youtube";
 import type { VideoItem } from "@/types/video";
 import type {
@@ -230,10 +231,14 @@ async function resolveChannel(): Promise<{
 }> {
   const handle = YOUTUBE_CHANNEL.handle;
 
-  const byHandle = await youtubeFetch<ChannelsListResponse>("channels", {
-    part: "snippet,statistics,contentDetails",
-    forHandle: handle,
-  });
+  const byHandle = await youtubeFetch<ChannelsListResponse>(
+    "channels",
+    {
+      part: "snippet,statistics,contentDetails",
+      forHandle: handle,
+    },
+    YOUTUBE_STATS_CACHE_SECONDS,
+  );
 
   let item = byHandle.items?.[0];
 
@@ -253,10 +258,14 @@ async function resolveChannel(): Promise<{
       throw new Error(`YouTube channel not found for @${handle}`);
     }
 
-    const byId = await youtubeFetch<ChannelsListResponse>("channels", {
-      part: "snippet,statistics,contentDetails",
-      id: channelId,
-    });
+    const byId = await youtubeFetch<ChannelsListResponse>(
+      "channels",
+      {
+        part: "snippet,statistics,contentDetails",
+        id: channelId,
+      },
+      YOUTUBE_STATS_CACHE_SECONDS,
+    );
     item = byId.items?.[0];
   }
 

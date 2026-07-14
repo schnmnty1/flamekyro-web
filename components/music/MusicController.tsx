@@ -40,7 +40,7 @@ export function MusicController() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.96 }}
           transition={SPRING_SOFT}
-          className="fixed right-4 bottom-4 z-[60] sm:right-6 sm:bottom-6"
+          className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[60] sm:right-[max(1.5rem,env(safe-area-inset-right))] sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           <div className="glass-panel flex items-center gap-2 rounded-2xl px-2.5 py-2">
             <button

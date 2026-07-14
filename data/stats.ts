@@ -40,7 +40,18 @@ export function buildPendingStatCards(): StatCardModel[] {
 
 export const STATS_SECTION = {
   heading: "CREATOR STATS",
-  subtitle: "The numbers behind the grind.",
   connectingLabel: "Connecting to YouTube…",
   errorLabel: "Unable to load YouTube data. Try again later.",
 } as const;
+
+/** Background stats poll cadence — single source of truth (active) */
+export const STATS_REFRESH_INTERVAL_MS = 10_000;
+
+/** Backoff cadence after sustained unchanged refreshes */
+export const STATS_REFRESH_INTERVAL_IDLE_MS = 20_000;
+
+/** Unchanged successful refreshes before switching to idle cadence */
+export const STATS_STALE_STREAK_BEFORE_IDLE = 5;
+
+/** Digit roll duration for live value changes */
+export const STATS_ODOMETER_DURATION_MS = 400;

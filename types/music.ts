@@ -17,6 +17,8 @@ export type MusicPreferences = {
 export type MusicContextValue = {
   /** True after first user gesture unlocked audio */
   unlocked: boolean;
+  /** False when the theme file is missing or unreachable */
+  available: boolean;
   isPlaying: boolean;
   isMuted: boolean;
   volume: number;

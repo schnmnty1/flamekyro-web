@@ -2,7 +2,8 @@ import type { YouTubeApiPayload } from "@/types/youtube";
 
 /**
  * Browser-side fetch of `/api/youtube` with in-flight deduplication.
- * Stats + videos adapters share one network round-trip.
+ * Stats + videos adapters share one network round-trip on cold load.
+ * Polling passes AbortSignal and skips the shared inflight lock.
  */
 
 const ENDPOINT = "/api/youtube";
@@ -16,13 +17,23 @@ export class YouTubeClientError extends Error {
   }
 }
 
-export async function fetchYouTubeFromApi(): Promise<YouTubeApiPayload> {
-  if (inflight) return inflight;
+export type FetchYouTubeOptions = {
+  signal?: AbortSignal;
+};
 
-  inflight = (async () => {
+export async function fetchYouTubeFromApi(
+  options?: FetchYouTubeOptions,
+): Promise<YouTubeApiPayload> {
+  const signal = options?.signal;
+
+  if (!signal && inflight) return inflight;
+
+  const request = (async () => {
     const response = await fetch(ENDPOINT, {
       method: "GET",
       headers: { Accept: "application/json" },
+      cache: "no-store",
+      signal,
     });
 
     if (!response.ok) {
@@ -30,9 +41,14 @@ export async function fetchYouTubeFromApi(): Promise<YouTubeApiPayload> {
     }
 
     return (await response.json()) as YouTubeApiPayload;
-  })().finally(() => {
-    inflight = null;
-  });
+  })();
 
-  return inflight;
+  if (!signal) {
+    inflight = request.finally(() => {
+      inflight = null;
+    });
+    return inflight;
+  }
+
+  return request;
 }

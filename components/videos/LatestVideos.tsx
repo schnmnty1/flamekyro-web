@@ -7,6 +7,7 @@ import { GlassButton } from "@/components/ui";
 import { VIDEOS_INDEX_URL, VIDEOS_SECTION } from "@/data/videos";
 import { useLatestVideos } from "@/hooks/useLatestVideos";
 import { usePrefersReducedMotion } from "@/hooks";
+import { BRAND } from "@/lib/constants";
 import { SPRING_SOFT, staggerContainer } from "@/lib/motion";
 
 const sectionContainer = {
@@ -35,16 +36,23 @@ const sectionItem = {
  */
 export function LatestVideos() {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const { videos, loading, source, error } = useLatestVideos();
+  const { videos, loading, source, error, reload } = useLatestVideos();
 
-  const showLiveGrid = !loading && !error && source === "live" && videos.length > 0;
-  const statusLabel = error
-    ? VIDEOS_SECTION.errorLabel
-    : VIDEOS_SECTION.connectingLabel;
+  const showLiveGrid =
+    !loading && !error && source === "live" && videos.length > 0;
+  const showEmpty =
+    !loading && !error && source === "live" && videos.length === 0;
+  const showError = Boolean(error) && !loading;
+  const showConnecting = loading && !error;
 
   return (
     <section
       aria-labelledby="latest-videos-heading"
+      aria-describedby={
+        showError || showConnecting || showEmpty
+          ? "latest-videos-status"
+          : undefined
+      }
       className="section-band section-rule relative z-10 overflow-x-clip"
     >
       <motion.div
@@ -58,10 +66,7 @@ export function LatestVideos() {
           variants={prefersReducedMotion ? undefined : sectionItem}
           className="mx-auto mb-3 max-w-2xl text-center sm:mb-3.5"
         >
-          <h2
-            id="latest-videos-heading"
-            className="text-section"
-          >
+          <h2 id="latest-videos-heading" className="text-section">
             {VIDEOS_SECTION.heading}
           </h2>
         </motion.div>
@@ -69,8 +74,6 @@ export function LatestVideos() {
         {showLiveGrid ? (
           <motion.div
             variants={prefersReducedMotion ? undefined : staggerContainer}
-            // Videos load after the section's whileInView may already be "visible".
-            // Animate this grid on mount so cards are not left at variants.hidden (opacity: 0).
             initial={prefersReducedMotion ? false : "hidden"}
             animate={prefersReducedMotion ? undefined : "visible"}
             className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 lg:gap-4"
@@ -79,14 +82,40 @@ export function LatestVideos() {
               <VideoCard key={video.id} video={video} />
             ))}
           </motion.div>
+        ) : showError ? (
+          <div className="flex flex-col items-center gap-3 py-2">
+            <p
+              id="latest-videos-status"
+              className="text-center text-sm tracking-[0.04em] text-white/45"
+              role="alert"
+            >
+              {error ?? VIDEOS_SECTION.errorLabel}
+            </p>
+            <GlassButton
+              type="button"
+              onClick={() => void reload()}
+              className="min-h-10 px-6 text-sm tracking-[0.1em] uppercase"
+            >
+              Try Again
+            </GlassButton>
+          </div>
+        ) : showEmpty ? (
+          <p
+            id="latest-videos-status"
+            className="py-6 text-center text-sm tracking-[0.04em] text-white/40"
+            role="status"
+          >
+            No videos yet. Check back soon.
+          </p>
         ) : (
           <div className="space-y-3">
             <p
+              id="latest-videos-status"
               className="text-center text-sm tracking-[0.04em] text-white/40"
               role="status"
               aria-live="polite"
             >
-              {statusLabel}
+              {VIDEOS_SECTION.connectingLabel}
             </p>
             <VideoSkeleton count={VIDEOS_SECTION.skeletonCount} />
           </div>
@@ -100,7 +129,7 @@ export function LatestVideos() {
             href={VIDEOS_INDEX_URL}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="View all FlameKyro videos on YouTube"
+            aria-label={`View all ${BRAND.name} videos on YouTube`}
             className="min-h-10 px-7 text-sm tracking-[0.12em] uppercase"
           >
             View All Videos

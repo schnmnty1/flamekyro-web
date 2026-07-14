@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Coverflow visual compare — archive vs rebuild</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #050816;
+        color: #fff;
+        font-family: system-ui, sans-serif;
+      }
+      h1 { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; margin: 12px 16px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 8px 24px; }
+      .panel { border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; }
+      .label { padding: 8px 12px; font-size: 12px; background: rgba(255,255,255,0.04); }
+      .zone {
+        position: relative;
+        display: grid;
+        min-height: 360px;
+        place-items: center;
+        perspective: 1200px;
+      }
+      .carousel {
+        position: relative;
+        width: min(100%, 1080px);
+        height: min(44vh, 420px);
+        min-height: 310px;
+        transform-style: preserve-3d;
+      }
+      .card {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: clamp(150px, 21vw, 250px);
+        aspect-ratio: 1;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.22);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        transform: translate(-50%, -50%);
+        transition:
+          transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          opacity 280ms ease,
+          filter 280ms ease;
+        background: linear-gradient(135deg, var(--a), var(--b));
+        user-select: none;
+      }
+      .controls { display: flex; gap: 8px; padding: 8px 12px 16px; }
+      button {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Frame compare — same cards, archive math left / rebuild paint right</h1>
+    <div class="row">
+      <div class="panel">
+        <div class="label">ARCHIVED (inline port of script.js)</div>
+        <div class="zone" id="zone-a">
+          <div class="carousel" id="carousel-a"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="label">REBUILD (v2Coverflow paint + always-on 520ms)</div>
+        <div class="zone" id="zone-b">
+          <div class="carousel" id="carousel-b"></div>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button type="button" id="btn-rest">Rest (offset 0)</button>
+      <button type="button" id="btn-drag">Drag +0.5</button>
+      <button type="button" id="btn-drag1">Drag +1.0</button>
+      <button type="button" id="btn-next">Snap next</button>
+      <span id="status" style="opacity:0.6;align-self:center;font-size:12px"></span>
+    </div>
+    <script>
+      const NAMES = ["A","B","C","D","E","F","G","H"];
+      const COLORS = [
+        ["#ff3434","#ff8a3d"],["#ffb13d","#ff3d77"],["#3aa8ff","#2870ff"],["#9b8cff","#5865f2"],
+        ["#25f4ee","#ff0050"],["#b66cff","#6441a5"],["#f5f7ff","#8d9aad"],["#fff45c","#ffcf33"],
+      ];
+
+      function makeCards(root) {
+        return NAMES.map((name, i) => {
+          const el = document.createElement("div");
+          el.className = "card";
+          el.textContent = name;
+          el.style.setProperty("--a", COLORS[i][0]);
+          el.style.setProperty("--b", COLORS[i][1]);
+          root.appendChild(el);
+          return el;
+        });
+      }
+
+      const cardsA = makeCards(document.getElementById("carousel-a"));
+      const cardsB = makeCards(document.getElementById("carousel-b"));
+
+      let activeA = 0;
+      let activeB = 0;
+
+      function signed(index, active, total) {
+        let offset = index - active;
+        if (offset > total / 2) offset -= total;
+        if (offset < -total / 2) offset += total;
+        return offset;
+      }
+
+      // Exact archive render
+      function renderArchive(cards, active, shift) {
+        cards.forEach((card, index) => {
+          const offset = signed(index, active, cards.length) + shift;
+          const abs = Math.abs(offset);
+          const clamped = Math.min(abs, 4);
+          const x = offset * 176;
+          const z = -clamped * 120;
+          const rotate = offset * -34;
+          const scale = 1 - clamped * 0.08;
+          card.classList.toggle("is-active", Math.abs(offset) < 0.08);
+          card.style.opacity = abs > 4 ? "0" : String(1 - clamped * 0.13);
+          card.style.filter = Math.abs(offset) < 0.08
+            ? "brightness(1)"
+            : `brightness(${0.75 - clamped * 0.04}) blur(${clamped * 0.4}px)`;
+          card.style.zIndex = String(20 - clamped);
+          card.style.pointerEvents = abs <= 1 ? "auto" : "none";
+          card.style.transform = `translate(-50%, -50%) translateX(${x}px) translateZ(${z}px) rotateY(${rotate}deg) scale(${scale})`;
+        });
+      }
+
+      // Rebuild paint (same numbers; width scale = 1 when cards are 250 max)
+      function renderRebuild(cards, active, shift) {
+        const refW = 250;
+        const w = cards[0].getBoundingClientRect().width || refW;
+        const scalePx = w / refW;
+        cards.forEach((card, index) => {
+          const offset = signed(index, active, cards.length) + shift;
+          const abs = Math.abs(offset);
+          const clamped = Math.min(abs, 4);
+          const x = offset * 176 * scalePx;
+          const z = -clamped * 120 * scalePx;
+          const rotate = offset * -34;
+          const scale = 1 - clamped * 0.08;
+          card.classList.toggle("is-active", Math.abs(offset) < 0.08);
+          card.style.opacity = abs > 4 ? "0" : String(1 - clamped * 0.13);
+          card.style.filter = Math.abs(offset) < 0.08
+            ? "brightness(1)"
+            : `brightness(${0.75 - clamped * 0.04}) blur(${clamped * 0.4}px)`;
+          card.style.zIndex = String(20 - clamped);
+          card.style.pointerEvents = abs <= 1 ? "auto" : "none";
+          card.style.transform = `translate(-50%, -50%) translateX(${x}px) translateZ(${z}px) rotateY(${rotate}deg) scale(${scale})`;
+        });
+      }
+
+      function syncBoth(shift) {
+        renderArchive(cardsA, activeA, shift);
+        renderRebuild(cardsB, activeB, shift);
+        // Compare computed matrices of center-ish cards
+        const ta = getComputedStyle(cardsA[activeA]).transform;
+        const tb = getComputedStyle(cardsB[activeB]).transform;
+        document.getElementById("status").textContent =
+          `active=${activeA} shift=${shift} | archive transform≈rebuild when cards share size`;
+        console.log({ shift, archive: ta, rebuild: tb });
+      }
+
+      function bindDrag(zone, getActive, setShift) {
+        let start = null;
+        zone.addEventListener("pointerdown", (e) => {
+          start = e.clientX;
+          zone.setPointerCapture?.(e.pointerId);
+        });
+        zone.addEventListener("pointermove", (e) => {
+          if (start === null) return;
+          const dx = e.clientX - start;
+          const drag = Math.max(-1.25, Math.min(1.25, dx / 176));
+          setShift(drag);
+        });
+        zone.addEventListener("pointerup", (e) => {
+          if (start === null) return;
+          const delta = e.clientX - start;
+          start = null;
+          if (Math.abs(delta) < 42) {
+            setShift(0);
+            return;
+          }
+          setShift(0, delta < 0 ? 1 : -1);
+        });
+      }
+
+      let shiftA = 0;
+      let shiftB = 0;
+
+      bindDrag(document.getElementById("zone-a"), () => activeA, (s, step) => {
+        if (typeof step === "number") {
+          activeA = (activeA + step + cardsA.length) % cardsA.length;
+          shiftA = 0;
+        } else shiftA = s;
+        renderArchive(cardsA, activeA, shiftA);
+      });
+      bindDrag(document.getElementById("zone-b"), () => activeB, (s, step) => {
+        if (typeof step === "number") {
+          activeB = (activeB + step + cardsB.length) % cardsB.length;
+          shiftB = 0;
+        } else shiftB = s;
+        renderRebuild(cardsB, activeB, shiftB);
+      });
+
+      document.getElementById("btn-rest").onclick = () => {
+        shiftA = shiftB = 0;
+        syncBoth(0);
+      };
+      document.getElementById("btn-drag").onclick = () => syncBoth(0.5);
+      document.getElementById("btn-drag1").onclick = () => syncBoth(1);
+      document.getElementById("btn-next").onclick = () => {
+        activeA = (activeA + 1) % cardsA.length;
+        activeB = (activeB + 1) % cardsB.length;
+        syncBoth(0);
+      };
+
+      syncBoth(0);
+    </script>
+  </body>
+</html>

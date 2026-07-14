@@ -34,15 +34,15 @@ export function CarouselPagination({
             tabIndex={isActive ? 0 : -1}
             onClick={() => onSelect(index)}
             className={cn(
-              "h-1.5 rounded-full transition-all duration-300 ease-out",
+              "h-2 rounded-full transition-all duration-300 ease-out",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/55 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              isActive ? "w-7" : "w-1.5 bg-white/20 hover:bg-white/35",
+              isActive ? "w-8" : "w-2 bg-white/22 hover:bg-white/40",
             )}
             style={
               isActive
                 ? {
-                    backgroundColor: theme.accent,
-                    boxShadow: `0 0 10px ${theme.glow}, 0 0 22px ${theme.shadow}`,
+                    backgroundColor: theme.accent === "#FFFFFF" ? theme.glow : theme.accent,
+                    boxShadow: `0 0 12px ${theme.glow}, 0 0 28px ${theme.shadow}`,
                   }
                 : undefined
             }

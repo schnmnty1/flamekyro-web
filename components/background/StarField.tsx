@@ -40,7 +40,7 @@ export function StarField() {
 
   const stars = useMemo<Star[]>(
     () =>
-      Array.from({ length: 48 }, (_, i) => {
+      Array.from({ length: prefersReducedMotion ? 24 : 48 }, (_, i) => {
         const r = seededRandom(i + 1);
         const r2 = seededRandom(i + 50);
         const r3 = seededRandom(i + 90);
@@ -54,28 +54,30 @@ export function StarField() {
           duration: 3 + r3 * 4,
         };
       }),
-    [],
+    [prefersReducedMotion],
   );
 
   const particles = useMemo<Particle[]>(
     () =>
-      Array.from({ length: 12 }, (_, i) => {
-        const r = seededRandom(i + 200);
-        const r2 = seededRandom(i + 260);
-        const r3 = seededRandom(i + 320);
-        return {
-          id: i,
-          left: `${10 + r * 80}%`,
-          top: `${15 + r2 * 70}%`,
-          size: 1.5 + r3 * 2,
-          opacity: 0.12 + r * 0.2,
-          driftX: (r - 0.5) * 24,
-          driftY: -12 - r2 * 28,
-          duration: 10 + r3 * 10,
-          delay: r * 5,
-        };
-      }),
-    [],
+      prefersReducedMotion
+        ? []
+        : Array.from({ length: 12 }, (_, i) => {
+            const r = seededRandom(i + 200);
+            const r2 = seededRandom(i + 260);
+            const r3 = seededRandom(i + 320);
+            return {
+              id: i,
+              left: `${10 + r * 80}%`,
+              top: `${15 + r2 * 70}%`,
+              size: 1.5 + r3 * 2,
+              opacity: 0.12 + r * 0.2,
+              driftX: (r - 0.5) * 24,
+              driftY: -12 - r2 * 28,
+              duration: 10 + r3 * 10,
+              delay: r * 5,
+            };
+          }),
+    [prefersReducedMotion],
   );
 
   return (

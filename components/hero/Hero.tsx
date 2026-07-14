@@ -1,30 +1,35 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { GlassButton } from "@/components/ui";
 import { useSpatialLayer } from "@/components/spatial";
 import { useYouTubeLive } from "@/hooks/useYouTubeLive";
+import { usePrefersReducedMotion } from "@/hooks";
 import { BRAND } from "@/lib/constants";
 import { heroContainer, heroHeading, heroItem } from "@/lib/motion";
+import { cn } from "@/lib/cn";
 
 /**
  * Cinematic hero — brand-first, compact vertical footprint for near single-screen.
- * Live badge + Watch Live wired to real YouTube Live status.
+ * Live badge reflects real YouTube Live status.
  */
 export function Hero() {
-  const layer = useSpatialLayer({ rotate: 2, translate: 10 });
-  const { isLive, statusLabel, liveTitle, watchUrl } = useYouTubeLive();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const layer = useSpatialLayer({
+    rotate: prefersReducedMotion ? 0 : 2,
+    translate: prefersReducedMotion ? 0 : 10,
+  });
+  const { isLive, statusLabel, liveTitle } = useYouTubeLive();
 
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative z-20 flex items-end justify-center px-5 pb-1 pt-[4.5rem] sm:px-8 sm:pb-1 sm:pt-[4.9rem] lg:pb-1.5"
+      className="relative z-20 flex items-end justify-center px-5 pb-2 pt-[max(2.25rem,calc(env(safe-area-inset-top)+1.75rem))] sm:px-8 sm:pb-2.5 sm:pt-[max(2.75rem,calc(env(safe-area-inset-top)+2.25rem))] lg:pb-3"
       style={{ perspective: 1200 }}
     >
       <motion.div
-        variants={heroContainer}
-        initial="hidden"
-        animate="visible"
+        variants={prefersReducedMotion ? undefined : heroContainer}
+        initial={prefersReducedMotion ? false : "hidden"}
+        animate={prefersReducedMotion ? undefined : "visible"}
         style={{
           rotateX: layer.rotateX,
           rotateY: layer.rotateY,
@@ -36,32 +41,45 @@ export function Hero() {
         className="flex w-full max-w-5xl flex-col items-center text-center will-change-transform"
       >
         <motion.p
-          variants={heroItem}
-          className="text-brand mb-1.5 max-w-md text-[0.65rem] font-medium uppercase tracking-[0.32em] text-white/40 sm:mb-2 sm:text-xs sm:tracking-[0.36em]"
+          variants={prefersReducedMotion ? undefined : heroItem}
+          className="text-brand mb-1.5 max-w-md text-[0.7rem] font-medium uppercase tracking-[0.28em] text-white/42 sm:mb-2 sm:text-xs sm:tracking-[0.36em]"
         >
           {BRAND.eyebrow}
         </motion.p>
 
         <motion.h1
           id="hero-heading"
-          variants={heroHeading}
-          className="text-display hero-glow max-w-full text-[clamp(2.25rem,8.5vw,4.75rem)] leading-[0.9] text-white"
+          variants={prefersReducedMotion ? undefined : heroHeading}
+          className="text-display hero-glow max-w-full text-[clamp(2.35rem,8.5vw,4.75rem)] leading-[0.9] text-white"
           style={{ transform: "translateZ(28px)" }}
         >
           {BRAND.name}
         </motion.h1>
 
         <motion.div
-          variants={heroItem}
-          className="mt-2 flex flex-col items-center gap-1 sm:mt-2.5"
+          variants={prefersReducedMotion ? undefined : heroItem}
+          className="mt-3 flex flex-col items-center gap-1"
           style={{ transform: "translateZ(16px)" }}
         >
           <div className="flex items-center gap-2.5">
             <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500/50 opacity-50" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
+              {isLive ? (
+                <>
+                  {!prefersReducedMotion ? (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500/50 opacity-50" />
+                  ) : null}
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
+                </>
+              ) : (
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white/35 ring-1 ring-white/20" />
+              )}
             </span>
-            <p className="text-sm font-medium tracking-[0.06em] text-emerald-400/92 sm:text-[0.95rem]">
+            <p
+              className={cn(
+                "text-sm font-medium tracking-[0.06em] sm:text-[0.95rem]",
+                isLive ? "text-emerald-400/92" : "text-white/55",
+              )}
+            >
               <span className="sr-only">Live status: </span>
               {statusLabel}
             </p>
@@ -71,26 +89,6 @@ export function Hero() {
               {liveTitle}
             </p>
           ) : null}
-        </motion.div>
-
-        <motion.div
-          variants={heroItem}
-          className="mt-2 sm:mt-2.5"
-          style={{ transform: "translateZ(20px)" }}
-        >
-          <GlassButton
-            href={watchUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={
-              isLive
-                ? `Watch ${BRAND.name} live on YouTube`
-                : `Open ${BRAND.name} on YouTube`
-            }
-            className="min-h-10 px-7 text-sm tracking-[0.14em] uppercase sm:min-h-11 sm:px-9 sm:text-[0.95rem]"
-          >
-            Watch Live
-          </GlassButton>
         </motion.div>
       </motion.div>
     </section>

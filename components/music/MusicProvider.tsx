@@ -29,6 +29,7 @@ type MusicProviderProps = {
 /**
  * Site-wide music shell — survives client navigations when mounted in Providers.
  * Unlock requires a real user gesture (click / tap / key).
+ * UI stays hidden when the theme file is missing (no 404 noise in the chrome).
  */
 export function MusicProvider({
   children,
@@ -39,6 +40,7 @@ export function MusicProvider({
   const unlockingRef = useRef(false);
 
   const [unlocked, setUnlocked] = useState(false);
+  const [available, setAvailable] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolumeState] = useState(0.45);
@@ -51,6 +53,33 @@ export function MusicProvider({
       engineRef.current = null;
     };
   }, [fadeMs]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const probe = new Audio();
+    probe.preload = "metadata";
+
+    const markOk = () => {
+      if (!cancelled) setAvailable(true);
+    };
+    const markFail = () => {
+      if (!cancelled) setAvailable(false);
+    };
+
+    probe.addEventListener("canplaythrough", markOk);
+    probe.addEventListener("loadedmetadata", markOk);
+    probe.addEventListener("error", markFail);
+    probe.src = track.src;
+
+    return () => {
+      cancelled = true;
+      probe.removeEventListener("canplaythrough", markOk);
+      probe.removeEventListener("loadedmetadata", markOk);
+      probe.removeEventListener("error", markFail);
+      probe.removeAttribute("src");
+      probe.load();
+    };
+  }, [track.src]);
 
   useEffect(() => {
     const prefs = loadMusicPreferences();
@@ -72,13 +101,13 @@ export function MusicProvider({
 
   const play = useCallback(async () => {
     const engine = engineRef.current;
-    if (!engine) return;
+    if (!engine || !available) return;
 
     engine.ensure(track);
     engine.setGain(volume, isMuted);
     const started = await engine.play({ fade: true });
     setIsPlaying(started);
-  }, [track, volume, isMuted]);
+  }, [track, volume, isMuted, available]);
 
   const pause = useCallback(async () => {
     const engine = engineRef.current;
@@ -120,7 +149,7 @@ export function MusicProvider({
   }, []);
 
   const unlockAndMaybePlay = useCallback(async () => {
-    if (unlockingRef.current || unlocked) return;
+    if (unlockingRef.current || unlocked || !available) return;
     unlockingRef.current = true;
 
     const prefs = loadMusicPreferences();
@@ -142,10 +171,10 @@ export function MusicProvider({
     }
 
     unlockingRef.current = false;
-  }, [track, unlocked]);
+  }, [track, unlocked, available]);
 
   useEffect(() => {
-    if (!hydrated || unlocked) return;
+    if (!hydrated || unlocked || !available) return;
 
     const onGesture = (event: Event) => {
       if (event.type === "keydown") {
@@ -174,11 +203,12 @@ export function MusicProvider({
       window.removeEventListener("pointerdown", onGesture, true);
       window.removeEventListener("keydown", onGesture, true);
     };
-  }, [hydrated, unlocked, unlockAndMaybePlay]);
+  }, [hydrated, unlocked, available, unlockAndMaybePlay]);
 
   const value = useMemo<MusicContextValue>(
     () => ({
       unlocked,
+      available,
       isPlaying,
       isMuted,
       volume,
@@ -192,6 +222,7 @@ export function MusicProvider({
     }),
     [
       unlocked,
+      available,
       isPlaying,
       isMuted,
       volume,
@@ -208,8 +239,12 @@ export function MusicProvider({
   return (
     <MusicContext.Provider value={value}>
       {children}
-      <MusicHint />
-      <MusicController />
+      {available ? (
+        <>
+          <MusicHint />
+          <MusicController />
+        </>
+      ) : null}
     </MusicContext.Provider>
   );
 }

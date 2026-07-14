@@ -16,7 +16,7 @@ type ActiveCardGlowProps = {
 
 /**
  * Soft colored bloom behind the active card only.
- * Color crossfades in 500ms when the active platform changes.
+ * Color crossfades when the active platform changes.
  */
 export function ActiveCardGlow({ platform, lite }: ActiveCardGlowProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -30,24 +30,24 @@ export function ActiveCardGlow({ platform, lite }: ActiveCardGlowProps) {
       <AnimatePresence mode="sync">
         <motion.div
           key={platform.id}
-          className="absolute h-[160px] w-[160px] rounded-full sm:h-[200px] sm:w-[200px] lg:h-[220px] lg:w-[220px]"
+          className="absolute h-[280px] w-[280px] rounded-full sm:h-[380px] sm:w-[380px] lg:h-[440px] lg:w-[440px]"
           style={{
             background: `radial-gradient(circle, ${theme.glow} 0%, transparent 68%)`,
-            filter: lite || prefersReducedMotion ? "blur(28px)" : "blur(48px)",
+            filter: lite || prefersReducedMotion ? "blur(32px)" : "blur(56px)",
             willChange: "opacity, transform",
           }}
           initial={
             prefersReducedMotion
-              ? { opacity: 0.85 }
-              : { opacity: 0, scale: 0.92 }
+              ? { opacity: 0.9 }
+              : { opacity: 0, scale: 0.9 }
           }
-          animate={{ opacity: lite ? 0.55 : 0.85, scale: 1 }}
+          animate={{ opacity: lite ? 0.6 : 0.92, scale: 1 }}
           exit={
             prefersReducedMotion
               ? { opacity: 0 }
-              : { opacity: 0, scale: 1.04 }
+              : { opacity: 0, scale: 1.06 }
           }
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         />
       </AnimatePresence>
     </div>

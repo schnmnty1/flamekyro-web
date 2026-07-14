@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FlameKyro Web
 
-## Getting Started
+Official website for **FlameKyro** — gaming creator site with live YouTube status, latest uploads, creator stats, and social connect.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router)
+- React 19
+- Tailwind CSS v4
+- Framer Motion
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill in `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Required | Purpose |
+|---|---|---|
+| `YOUTUBE_API_KEY` | Yes | Server-only YouTube Data API key for live status, videos, and stats |
+| `NEXT_PUBLIC_SITE_URL` | Recommended in production | Canonical origin for SEO (`https://your-domain.com`) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Optional assets
 
-## Learn More
+Place the theme track at:
 
-To learn more about Next.js, take a look at the following resources:
+```
+public/audio/theme.mp3
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+If the file is missing, the music UI stays hidden (no broken chrome).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+```bash
+npm run dev      # http://localhost:3000
+npm run build
+npm run start
+npm run lint
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- YouTube data is fetched via `/api/youtube` (server-side key; never expose `YOUTUBE_API_KEY` to the client).
+- The Social Carousel geometry is locked — do not change unless fixing a reported bug.

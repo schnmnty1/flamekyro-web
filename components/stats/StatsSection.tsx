@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { LoadingSkeleton } from "@/components/stats/LoadingSkeleton";
 import { StatCard } from "@/components/stats/StatCard";
+import { GlassButton } from "@/components/ui";
 import { STAT_CARD_DEFINITIONS, STATS_SECTION } from "@/data/stats";
 import { useCreatorStats } from "@/hooks/useCreatorStats";
 import { usePrefersReducedMotion } from "@/hooks";
@@ -29,22 +30,23 @@ const sectionItem = {
 };
 
 /**
- * Creator Stats — adapter-driven metric grid.
- * Renders skeletons while source is pending (no fabricated numbers).
+ * Creator Stats — adapter-driven metric grid with silent live refresh.
  */
 export function StatsSection() {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const { stats, loading, error, source } = useCreatorStats();
+  const { stats, loading, error, source, reload } = useCreatorStats();
 
-  const showLiveGrid = !loading && !error && source === "live" && stats.length > 0;
-  const statusLabel = error
-    ? STATS_SECTION.errorLabel
-    : STATS_SECTION.connectingLabel;
+  const showLiveGrid = source === "live" && stats.length > 0;
+  const showError = Boolean(error) && !showLiveGrid && !loading;
+  const showConnecting = loading && !showLiveGrid;
 
   return (
     <section
       aria-labelledby="stats-heading"
-      className="section-band section-rule relative z-10 overflow-x-clip pb-5 sm:pb-6"
+      aria-describedby={
+        showError || showConnecting ? "stats-status" : undefined
+      }
+      className="section-band section-rule relative z-10 overflow-x-clip pb-6 sm:pb-7"
     >
       <motion.div
         className="container-page"
@@ -57,10 +59,7 @@ export function StatsSection() {
           variants={prefersReducedMotion ? undefined : sectionItem}
           className="mx-auto mb-3 max-w-2xl text-center sm:mb-3.5"
         >
-          <h2
-            id="stats-heading"
-            className="text-section"
-          >
+          <h2 id="stats-heading" className="text-section">
             {STATS_SECTION.heading}
           </h2>
         </motion.div>
@@ -76,14 +75,32 @@ export function StatsSection() {
               <StatCard key={stat.id} stat={stat} />
             ))}
           </motion.div>
+        ) : showError ? (
+          <div className="flex flex-col items-center gap-3 py-2">
+            <p
+              id="stats-status"
+              className="text-center text-sm tracking-[0.04em] text-white/45"
+              role="alert"
+            >
+              {error ?? STATS_SECTION.errorLabel}
+            </p>
+            <GlassButton
+              type="button"
+              onClick={() => void reload()}
+              className="min-h-10 px-6 text-sm tracking-[0.1em] uppercase"
+            >
+              Try Again
+            </GlassButton>
+          </div>
         ) : (
           <div className="space-y-3">
             <p
+              id="stats-status"
               className="text-center text-sm tracking-[0.04em] text-white/40"
               role="status"
               aria-live="polite"
             >
-              {statusLabel}
+              {STATS_SECTION.connectingLabel}
             </p>
             <LoadingSkeleton count={STAT_CARD_DEFINITIONS.length} />
           </div>

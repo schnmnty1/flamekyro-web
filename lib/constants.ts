@@ -5,12 +5,23 @@ export const BRAND = {
   tagline: "Gaming Creator",
   eyebrow: "VALORANT • EPIC CLUTCHES • FUNNY MOMENTS",
   liveLabel: "LIVE DAILY AROUND 10 AM",
+  description:
+    "Official FlameKyro website — Valorant clutches, funny moments, and live streams. Watch the latest uploads and catch the grind.",
 } as const;
+
+/**
+ * Canonical site origin for metadata, sitemap, and OG URLs.
+ * Override with NEXT_PUBLIC_SITE_URL in production.
+ */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  "https://flamekyro.com";
 
 /** External destinations — update when official links are finalized */
 export const LINKS = {
   discord: "https://discord.gg/flamekyro",
   watchLive: `https://www.youtube.com/${BRAND.handle}`,
+  youtube: `https://www.youtube.com/${BRAND.handle}`,
 } as const;
 
 /** Design tokens mirrored in globals.css for JS consumers */

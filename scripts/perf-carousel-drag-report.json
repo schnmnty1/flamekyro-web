@@ -1,0 +1,23 @@
+{
+  "method": "in-page rAF-synced pointermove (no Playwright mouse skew)",
+  "pagePerf": {
+    "frameCount": 91,
+    "avgFrameMs": 98.897,
+    "avgFps": 10.11,
+    "droppedBelow58fps": 88,
+    "droppedBelow28fps": 81,
+    "p95FrameMs": 200,
+    "worstFrameMs": 266.7,
+    "longTasks": 49,
+    "longTaskMaxMs": 137,
+    "longTaskTotalMs": 3747
+  },
+  "cdpDelta": {
+    "LayoutCount": 3,
+    "RecalcStyleCount": 96,
+    "LayoutDuration": 0.0008400000000000074,
+    "RecalcStyleDuration": 1.855293,
+    "ScriptDuration": 0.16673300000000002,
+    "TaskDuration": 5.5021629999999995
+  }
+}

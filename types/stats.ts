@@ -68,5 +68,7 @@ export type CreatorStatsSnapshot = {
 
 /** Future API adapter contract */
 export type CreatorStatsAdapter = {
-  fetchStats: () => Promise<CreatorStatsSnapshot>;
+  fetchStats: (options?: {
+    signal?: AbortSignal;
+  }) => Promise<CreatorStatsSnapshot>;
 };
