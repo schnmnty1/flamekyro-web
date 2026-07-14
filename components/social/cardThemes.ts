@@ -70,12 +70,20 @@ export const PLATFORM_CARD_THEMES: Record<SocialIconId, PlatformCardTheme> = {
     accent: "#FFFFFF",
     iconPlate: "rgba(0,0,0,0.2)",
   },
+  kick: {
+    surface: "linear-gradient(155deg, #7CFF4D 0%, #53FC18 42%, #1FA800 100%)",
+    wash: "radial-gradient(ellipse 85% 65% at 18% 0%, rgba(200,255,160,0.45) 0%, transparent 55%)",
+    glow: "rgba(83, 252, 24, 0.55)",
+    shadow: "rgba(40, 180, 10, 0.42)",
+    accent: "#0A0A0A",
+    iconPlate: "rgba(0,0,0,0.22)",
+  },
 };
 
-/** Kept for any legacy imports — v2 drag pitch is STEP_PX = 176 in v2Coverflow */
+/** Kept for any legacy imports — mirrors archiveCoverflow STEP_PX */
 export const CARD_SPACING = {
-  compact: 176,
-  desktop: 176,
+  compact: 186,
+  desktop: 186,
 } as const;
 
 /**

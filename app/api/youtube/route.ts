@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { YOUTUBE_STATS_CACHE_SECONDS } from "@/data/youtube";
+import { YOUTUBE_LIVE_CACHE_SECONDS } from "@/data/youtube";
 import { fetchYouTubeBundle } from "@/lib/youtube/server";
 
-/** Route cache aligned with STATS_REFRESH_INTERVAL_MS (10s — literal required by Next.js) */
-export const revalidate = 10;
+/** Cache YouTube aggregation for 60s (live status freshness; literal required by Next.js) */
+export const revalidate = 60;
 
 /**
  * Server proxy for YouTube Data API.
@@ -23,7 +23,7 @@ export async function GET() {
     return NextResponse.json(payload, {
       status: 200,
       headers: {
-        "Cache-Control": `s-maxage=${YOUTUBE_STATS_CACHE_SECONDS}, stale-while-revalidate=${YOUTUBE_STATS_CACHE_SECONDS}`,
+        "Cache-Control": `s-maxage=${YOUTUBE_LIVE_CACHE_SECONDS}, stale-while-revalidate=${YOUTUBE_LIVE_CACHE_SECONDS}`,
       },
     });
   } catch (error) {

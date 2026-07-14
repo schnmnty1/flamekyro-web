@@ -3,7 +3,7 @@ import type { YouTubeApiPayload } from "@/types/youtube";
 /**
  * Browser-side fetch of `/api/youtube` with in-flight deduplication.
  * Stats + videos adapters share one network round-trip on cold load.
- * Polling passes AbortSignal and skips the shared inflight lock.
+ * Polling may pass AbortSignal (skips the shared inflight lock).
  */
 
 const ENDPOINT = "/api/youtube";
@@ -32,7 +32,6 @@ export async function fetchYouTubeFromApi(
     const response = await fetch(ENDPOINT, {
       method: "GET",
       headers: { Accept: "application/json" },
-      cache: "no-store",
       signal,
     });
 

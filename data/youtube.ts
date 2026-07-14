@@ -1,5 +1,4 @@
 import { BRAND } from "@/lib/constants";
-import { STATS_REFRESH_INTERVAL_MS } from "@/data/stats";
 
 /**
  * Official FlameKyro YouTube channel config.
@@ -20,9 +19,3 @@ export const YOUTUBE_CACHE_SECONDS = 600;
 
 /** Live broadcast detection cache — must stay fresh */
 export const YOUTUBE_LIVE_CACHE_SECONDS = 60;
-
-/**
- * Channel statistics cache (subscribers / views / video count).
- * Derived from STATS_REFRESH_INTERVAL_MS — never hardcode a second cadence.
- */
-export const YOUTUBE_STATS_CACHE_SECONDS = STATS_REFRESH_INTERVAL_MS / 1000;

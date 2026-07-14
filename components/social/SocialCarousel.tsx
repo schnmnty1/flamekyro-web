@@ -30,7 +30,7 @@ import { usePrefersReducedMotion } from "@/hooks";
  * Social carousel — archived FlameKyro v2 drag pipeline.
  *
  * Smoothness comes from (matching the archive):
- * 1. dragOffset = dx / 176
+ * 1. dragOffset = dx / STEP_PX
  * 2. render on every pointermove (no rAF coalesce)
  * 3. CSS transform transition always on (never transition:none during drag)
  */
@@ -229,7 +229,7 @@ export function SocialCarousel() {
       >
         <div
           ref={stageRef}
-          className="carousel-stage relative z-10 mx-auto flex min-h-[310px] w-full max-w-[1080px] touch-pan-y items-center justify-center sm:min-h-[360px] lg:min-h-[420px]"
+          className="carousel-stage relative z-10 mx-auto flex min-h-[310px] w-full max-w-[1242px] touch-pan-y items-center justify-center sm:min-h-[360px] lg:min-h-[420px]"
           style={{ perspective: `${PERSPECTIVE_PX}px` }}
           onPointerDown={onPointerDown}
           onClickCapture={onClickCapture}

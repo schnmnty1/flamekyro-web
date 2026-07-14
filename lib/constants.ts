@@ -19,7 +19,7 @@ export const SITE_URL =
 
 /** External destinations — update when official links are finalized */
 export const LINKS = {
-  discord: "https://discord.gg/flamekyro",
+  discord: "https://discord.gg/BfmGewPdpy",
   watchLive: `https://www.youtube.com/${BRAND.handle}`,
   youtube: `https://www.youtube.com/${BRAND.handle}`,
 } as const;

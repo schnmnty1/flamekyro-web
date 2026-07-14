@@ -3,7 +3,8 @@
  * Paint path split for compositor: transform on host, filter/opacity on fx layer.
  */
 
-export const STEP_PX = 176;
+/** Neighbor pitch — +10px vs archive 176 for desktop composition only */
+export const STEP_PX = 186;
 export const DEPTH_STEP = 120;
 export const ROTATE_STEP = -34;
 export const SCALE_STEP = 0.08;
@@ -17,14 +18,24 @@ export function wrapIndex(index: number, length: number): number {
   return ((index % length) + length) % length;
 }
 
+/**
+ * Shortest signed ring offset for coverflow.
+ * With an odd platform count (7), yields a balanced −3…+3 wheel:
+ * three cards left, active center, three cards right.
+ */
 export function signedOffset(
   index: number,
   active: number,
   total: number,
 ): number {
+  if (total <= 0) return 0;
+
   let offset = index - active;
-  if (offset > total / 2) offset -= total;
-  if (offset < -total / 2) offset += total;
+  const half = Math.floor(total / 2);
+
+  if (offset > half) offset -= total;
+  if (offset < -half) offset += total;
+
   return offset;
 }
 
