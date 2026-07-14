@@ -483,31 +483,7 @@ body {
   animation: glass-shimmer 1.9s var(--ease-out-premium) infinite;
 }
 
-/* Music unlock hint pulse — existing only, softened */
-@keyframes music-hint-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 1px 0 var(--glass-highlight) inset,
-      0 8px 28px color-mix(in srgb, #000 28%, transparent),
-      0 0 0 0 color-mix(in srgb, var(--glow) 0%, transparent);
-    border-color: var(--border-soft);
-  }
-  50% {
-    box-shadow:
-      0 1px 0 var(--glass-highlight) inset,
-      0 8px 28px color-mix(in srgb, #000 28%, transparent),
-      0 0 28px 0 color-mix(in srgb, var(--glow) 14%, transparent);
-    border-color: color-mix(in srgb, var(--glow) 20%, transparent);
-  }
-}
-
-.music-hint-pulse {
-  animation: music-hint-pulse 3.2s var(--ease-out-premium) infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .music-hint-pulse,
   .skeleton-shimmer {
     animation: none;
   }

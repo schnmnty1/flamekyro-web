@@ -4,11 +4,10 @@ import type { MusicTrack } from "@/types/music";
 
 /**
  * Low-level audio transport — UI talks to MusicProvider, not this class.
- * Swap tracks via `loadTrack` without rebuilding controls.
  */
 export class AudioEngine {
   private audio: HTMLAudioElement | null = null;
-  private targetVolume = 0.45;
+  private targetVolume = 0.18;
   private muted = false;
   private fadeMs = MUSIC_FADE_MS;
 
@@ -23,8 +22,7 @@ export class AudioEngine {
   ensure(track: MusicTrack): HTMLAudioElement {
     if (!this.audio) {
       this.audio = new Audio();
-      this.audio.preload = "auto";
-      this.audio.crossOrigin = "anonymous";
+      this.audio.preload = "metadata";
     }
 
     const nextSrc = track.src;
@@ -33,6 +31,8 @@ export class AudioEngine {
       this.audio.src = nextSrc;
       this.audio.loop = track.loop ?? true;
       this.audio.load();
+    } else if (track.loop !== undefined) {
+      this.audio.loop = track.loop;
     }
 
     return this.audio;
@@ -61,7 +61,7 @@ export class AudioEngine {
     try {
       await this.audio.play();
     } catch {
-      // Autoplay / missing file — caller handles unlocked UI state
+      // Autoplay blocked or missing file — caller keeps UI in OFF state
       return false;
     }
 

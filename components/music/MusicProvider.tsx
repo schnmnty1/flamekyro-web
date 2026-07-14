@@ -9,9 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { MusicContext } from "@/components/music/context";
-import { MusicController } from "@/components/music/MusicController";
-import { MusicHint } from "@/components/music/MusicHint";
 import { DEFAULT_MUSIC_TRACK, MUSIC_FADE_MS } from "@/data/music";
+import { usePrefersReducedMotion } from "@/hooks";
 import { AudioEngine } from "@/lib/music/engine";
 import {
   loadMusicPreferences,
@@ -27,32 +26,33 @@ type MusicProviderProps = {
 };
 
 /**
- * Site-wide music shell — survives client navigations when mounted in Providers.
- * Unlock requires a real user gesture (click / tap / key).
- * UI stays hidden when the theme file is missing (no 404 noise in the chrome).
+ * Optional ambient music — never autoplays.
+ * UI lives in Hero; this provider only owns playback state.
  */
 export function MusicProvider({
   children,
   track = DEFAULT_MUSIC_TRACK,
-  fadeMs = MUSIC_FADE_MS,
+  fadeMs,
 }: MusicProviderProps) {
-  const engineRef = useRef<AudioEngine | null>(null);
-  const unlockingRef = useRef(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const resolvedFadeMs =
+    fadeMs ?? (prefersReducedMotion ? 0 : MUSIC_FADE_MS);
 
-  const [unlocked, setUnlocked] = useState(false);
+  const engineRef = useRef<AudioEngine | null>(null);
+
   const [available, setAvailable] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolumeState] = useState(0.45);
+  const [volume, setVolumeState] = useState(0.18);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    engineRef.current = new AudioEngine(fadeMs);
+    engineRef.current = new AudioEngine(resolvedFadeMs);
     return () => {
       engineRef.current?.destroy();
       engineRef.current = null;
     };
-  }, [fadeMs]);
+  }, [resolvedFadeMs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,6 +85,7 @@ export function MusicProvider({
     const prefs = loadMusicPreferences();
     setVolumeState(prefs.volume);
     setIsMuted(prefs.muted);
+    // Never restore playback on load — explicit Play only
     setIsPlaying(false);
     setHydrated(true);
     engineRef.current?.setGain(prefs.volume, prefs.muted);
@@ -105,17 +106,17 @@ export function MusicProvider({
 
     engine.ensure(track);
     engine.setGain(volume, isMuted);
-    const started = await engine.play({ fade: true });
+    const started = await engine.play({ fade: !prefersReducedMotion });
     setIsPlaying(started);
-  }, [track, volume, isMuted, available]);
+  }, [track, volume, isMuted, available, prefersReducedMotion]);
 
   const pause = useCallback(async () => {
     const engine = engineRef.current;
     if (!engine) return;
 
-    await engine.pause({ fade: true });
+    await engine.pause({ fade: !prefersReducedMotion });
     setIsPlaying(false);
-  }, []);
+  }, [prefersReducedMotion]);
 
   const togglePlay = useCallback(async () => {
     if (isPlaying) await pause();
@@ -148,66 +149,8 @@ export function MusicProvider({
     engineRef.current?.setGain(clamped, false);
   }, []);
 
-  const unlockAndMaybePlay = useCallback(async () => {
-    if (unlockingRef.current || unlocked || !available) return;
-    unlockingRef.current = true;
-
-    const prefs = loadMusicPreferences();
-    const engine = engineRef.current;
-    if (!engine) {
-      unlockingRef.current = false;
-      return;
-    }
-
-    engine.ensure(track);
-    engine.setGain(prefs.volume, prefs.muted);
-    setVolumeState(prefs.volume);
-    setIsMuted(prefs.muted);
-    setUnlocked(true);
-
-    if (prefs.playing) {
-      const started = await engine.play({ fade: true });
-      setIsPlaying(started);
-    }
-
-    unlockingRef.current = false;
-  }, [track, unlocked, available]);
-
-  useEffect(() => {
-    if (!hydrated || unlocked || !available) return;
-
-    const onGesture = (event: Event) => {
-      if (event.type === "keydown") {
-        const keyEvent = event as KeyboardEvent;
-        if (keyEvent.ctrlKey || keyEvent.metaKey || keyEvent.altKey) return;
-        if (
-          keyEvent.key === "Shift" ||
-          keyEvent.key === "Tab" ||
-          keyEvent.key === "Meta" ||
-          keyEvent.key === "Control" ||
-          keyEvent.key === "Alt"
-        ) {
-          return;
-        }
-      }
-      void unlockAndMaybePlay();
-    };
-
-    window.addEventListener("pointerdown", onGesture, {
-      capture: true,
-      passive: true,
-    });
-    window.addEventListener("keydown", onGesture, { capture: true });
-
-    return () => {
-      window.removeEventListener("pointerdown", onGesture, true);
-      window.removeEventListener("keydown", onGesture, true);
-    };
-  }, [hydrated, unlocked, available, unlockAndMaybePlay]);
-
   const value = useMemo<MusicContextValue>(
     () => ({
-      unlocked,
       available,
       isPlaying,
       isMuted,
@@ -221,7 +164,6 @@ export function MusicProvider({
       setVolume,
     }),
     [
-      unlocked,
       available,
       isPlaying,
       isMuted,
@@ -237,14 +179,6 @@ export function MusicProvider({
   );
 
   return (
-    <MusicContext.Provider value={value}>
-      {children}
-      {available ? (
-        <>
-          <MusicHint />
-          <MusicController />
-        </>
-      ) : null}
-    </MusicContext.Provider>
+    <MusicContext.Provider value={value}>{children}</MusicContext.Provider>
   );
 }

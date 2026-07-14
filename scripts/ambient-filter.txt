@@ -1,0 +1,15 @@
+[0]volume=0.18,lowpass=f=110,apulsator=mode=sine:hz=0.016:amount=0.4[d1];
+[1]volume=0.14,lowpass=f=160,apulsator=mode=sine:hz=0.02:amount=0.38[d2];
+[2]volume=0.09,lowpass=f=200,apulsator=mode=sine:hz=0.013:amount=0.32[d3];
+[3]volume=0.05,lowpass=f=400,highpass=f=100,apulsator=mode=sine:hz=0.025:amount=0.45,aecho=0.8:0.65:140:0.3[p1];
+[4]volume=0.045,bandpass=f=270:width_type=h:w=200,apulsator=mode=sine:hz=0.019:amount=0.5,aecho=0.82:0.7:190:0.35[p2];
+[5]volume=0.035,bandpass=f=350:width_type=h:w=240,tremolo=f=0.1:d=0.45,aecho=0.85:0.75:230:0.4[p3];
+[6]volume=0.022,bandpass=f=500:width_type=h:w=180,apulsator=mode=sine:hz=0.011:amount=0.6,aecho=0.88:0.8:300:0.45[air1];
+[7]volume=0.014,bandpass=f=680:width_type=h:w=150,tremolo=f=0.1:d=0.5,aecho=0.9:0.85:340:0.5[air2];
+[8]volume=0.06,lowpass=f=320,highpass=f=35,aecho=0.75:0.55:100:0.22[tex1];
+[9]volume=0.025,bandpass=f=1800:width_type=h:w=1200,aecho=0.65:0.45:70:0.18[tex2];
+[10]afade=t=in:st=0:d=0.8,afade=t=out:st=3.5:d=4.5,volume=0.045,lowpass=f=2500,aecho=0.9:0.85:260:0.55,adelay=12000|12000[n1];
+[11]afade=t=in:st=0:d=0.9,afade=t=out:st=4:d=5,volume=0.035,lowpass=f=2200,aecho=0.9:0.85:300:0.55,adelay=38000|38000[n2];
+[12]afade=t=in:st=0:d=0.7,afade=t=out:st=3.2:d=4.8,volume=0.04,lowpass=f=2400,aecho=0.9:0.85:280:0.55,adelay=64000|64000[n3];
+[13]afade=t=in:st=0:d=1,afade=t=out:st=4.2:d=5.5,volume=0.03,lowpass=f=2100,aecho=0.92:0.88:320:0.6,adelay=88000|88000[n4];
+[d1][d2][d3][p1][p2][p3][air1][air2][tex1][tex2][n1][n2][n3][n4]amix=inputs=14:duration=first:dropout_transition=0:normalize=0,volume=0.62,highpass=f=32,lowpass=f=4200,aecho=0.88:0.82:70|160|300:0.22|0.18|0.12,chorus=0.45:0.65:28:0.25:0.2:1.5,haas=level_in=1:level_out=0.85:side_gain=0.25,alimiter=limit=0.48:attack=8:release=80,volume=0.8[mix]

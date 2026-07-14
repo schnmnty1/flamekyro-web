@@ -11,12 +11,11 @@ export type MusicTrack = {
 export type MusicPreferences = {
   volume: number;
   muted: boolean;
+  /** Last known play intent — never used to autoplay on load */
   playing: boolean;
 };
 
 export type MusicContextValue = {
-  /** True after first user gesture unlocked audio */
-  unlocked: boolean;
   /** False when the theme file is missing or unreachable */
   available: boolean;
   isPlaying: boolean;

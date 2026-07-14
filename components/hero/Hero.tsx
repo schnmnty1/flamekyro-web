@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { MusicController } from "@/components/music";
 import { useSpatialLayer } from "@/components/spatial";
 import { useYouTubeLive } from "@/hooks/useYouTubeLive";
 import { usePrefersReducedMotion } from "@/hooks";
@@ -15,7 +16,7 @@ const STATUS_FADE = {
 };
 
 /**
- * Cinematic hero — brand-first, stream status only (no tagline clutter).
+ * Cinematic hero — brand, stream status, ambient music pill.
  * Live status from existing `/api/youtube` (shared fetch, no extra polling).
  */
 export function Hero() {
@@ -106,6 +107,10 @@ export function Hero() {
                 </p>
               </motion.div>
             </AnimatePresence>
+          </div>
+
+          <div className="mt-2.5 sm:mt-3">
+            <MusicController />
           </div>
         </motion.div>
       </motion.div>

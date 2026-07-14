@@ -7,7 +7,7 @@ import type { MusicTrack } from "@/types/music";
 export const MUSIC_TRACKS: readonly MusicTrack[] = [
   {
     id: "theme",
-    title: "FlameKyro Theme",
+    title: "FlameKyro Ambient",
     src: "/audio/theme.mp3",
     loop: true,
   },
@@ -18,10 +18,12 @@ export const DEFAULT_MUSIC_TRACK = MUSIC_TRACKS[0];
 
 export const MUSIC_STORAGE_KEY = "flamekyro.music.preferences";
 
-export const MUSIC_FADE_MS = 1000;
+/** Fade in/out duration for play & pause */
+export const MUSIC_FADE_MS = 300;
 
+/** Defaults — music never autoplays; user must press Play */
 export const MUSIC_DEFAULT_PREFERENCES = {
-  volume: 0.45,
+  volume: 0.18,
   muted: false,
-  playing: true,
+  playing: false,
 } as const;
