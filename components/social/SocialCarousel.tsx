@@ -26,13 +26,20 @@ import {
 import { SOCIAL_PLATFORMS } from "@/data/social";
 import { usePrefersReducedMotion } from "@/hooks";
 
+/** Continuous auto-scroll — one card every ~2.5s (does not alter drag physics) */
+const AUTO_MS_PER_CARD = 2_500;
+const AUTO_RESUME_MS = 750;
+
 /**
  * Social carousel — archived FlameKyro v2 drag pipeline.
  *
  * Smoothness comes from (matching the archive):
  * 1. dragOffset = dx / STEP_PX
  * 2. render on every pointermove (no rAF coalesce)
- * 3. CSS transform transition always on (never transition:none during drag)
+ * 3. CSS transform transition always on during drag
+ *
+ * Auto-scroll advances the same offsetShift the drag path uses (0 → +1 per card),
+ * then commits active−1 with a seamless circular wrap — no wrapper float.
  */
 export function SocialCarousel() {
   const length = SOCIAL_PLATFORMS.length;
@@ -40,8 +47,16 @@ export function SocialCarousel() {
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const activeRef = useRef(0);
   const dragOffsetRef = useRef(0);
+  /** Fractional coverflow offset while auto-scrolling (0 → +1 toward previous card) */
+  const autoOffsetRef = useRef(0);
   const draggingRef = useRef(false);
   const suppressClickRef = useRef(false);
+  const autoPausedRef = useRef(false);
+  const autoRafRef = useRef(0);
+  const autoLastTsRef = useRef(0);
+  const autoResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [liteEffects, setLiteEffects] = useState(false);
@@ -61,19 +76,116 @@ export function SocialCarousel() {
     [length],
   );
 
+  const setAutoScrollingClass = useCallback((on: boolean) => {
+    stageRef.current?.classList.toggle("is-auto-scrolling", on);
+  }, []);
+
+  /**
+   * Fold offset into [0, 1) while advancing active — continuous, no visual jump.
+   */
+  const commitAutoWraps = useCallback(() => {
+    let wrapped = false;
+    while (autoOffsetRef.current >= 1) {
+      autoOffsetRef.current -= 1;
+      activeRef.current = wrapIndex(activeRef.current - 1, length);
+      wrapped = true;
+    }
+    while (autoOffsetRef.current < 0) {
+      autoOffsetRef.current += 1;
+      activeRef.current = wrapIndex(activeRef.current + 1, length);
+      wrapped = true;
+    }
+    if (wrapped) {
+      setActiveIndex(activeRef.current);
+    }
+  }, [length]);
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoRafRef.current) {
+      cancelAnimationFrame(autoRafRef.current);
+      autoRafRef.current = 0;
+    }
+    autoLastTsRef.current = 0;
+    setAutoScrollingClass(false);
+  }, [setAutoScrollingClass]);
+
+  const pauseAutoScroll = useCallback(() => {
+    autoPausedRef.current = true;
+    if (autoResumeTimerRef.current) {
+      clearTimeout(autoResumeTimerRef.current);
+      autoResumeTimerRef.current = null;
+    }
+    stopAutoScroll();
+  }, [stopAutoScroll]);
+
+  const startAutoScroll = useCallback(() => {
+    if (prefersReducedMotion || autoPausedRef.current) return;
+    stopAutoScroll();
+    setAutoScrollingClass(true);
+    autoLastTsRef.current = performance.now();
+
+    const tick = (now: number) => {
+      if (autoPausedRef.current || draggingRef.current) {
+        autoRafRef.current = 0;
+        autoLastTsRef.current = 0;
+        setAutoScrollingClass(false);
+        return;
+      }
+
+      const last = autoLastTsRef.current || now;
+      const dt = Math.min(now - last, 64);
+      autoLastTsRef.current = now;
+
+      // Advance toward previous card (LEFT → RIGHT through the coverflow)
+      autoOffsetRef.current += dt / AUTO_MS_PER_CARD;
+      commitAutoWraps();
+
+      dragOffsetRef.current = autoOffsetRef.current;
+      renderCarousel(autoOffsetRef.current);
+      autoRafRef.current = requestAnimationFrame(tick);
+    };
+
+    autoRafRef.current = requestAnimationFrame(tick);
+  }, [
+    commitAutoWraps,
+    prefersReducedMotion,
+    renderCarousel,
+    setAutoScrollingClass,
+    stopAutoScroll,
+  ]);
+
+  const scheduleAutoResume = useCallback(() => {
+    if (prefersReducedMotion) return;
+    if (autoResumeTimerRef.current) {
+      clearTimeout(autoResumeTimerRef.current);
+    }
+    autoResumeTimerRef.current = setTimeout(() => {
+      autoResumeTimerRef.current = null;
+      if (draggingRef.current) return;
+      autoPausedRef.current = false;
+      startAutoScroll();
+    }, AUTO_RESUME_MS);
+  }, [prefersReducedMotion, startAutoScroll]);
+
   const setCardRef = useCallback(
     (index: number, el: HTMLElement | null) => {
       cardRefs.current[index] = el;
       if (el && cardRefs.current.filter(Boolean).length === length) {
-        renderCarousel(0);
+        renderCarousel(autoOffsetRef.current);
       }
     },
     [length, renderCarousel],
   );
 
   useLayoutEffect(() => {
-    renderCarousel(0);
+    renderCarousel(autoOffsetRef.current);
   }, [renderCarousel]);
+
+  // Re-paint in the same frame as activeIndex updates (glow / layoutActive)
+  // so React style commits cannot leave cards on a stale transform for a frame.
+  useLayoutEffect(() => {
+    renderCarousel(autoOffsetRef.current);
+  }, [activeIndex, renderCarousel]);
 
   useEffect(() => {
     const coarseMq = window.matchMedia("(pointer: coarse)");
@@ -95,12 +207,31 @@ export function SocialCarousel() {
       const next = wrapIndex(index, length);
       activeRef.current = next;
       dragOffsetRef.current = 0;
+      autoOffsetRef.current = 0;
       draggingRef.current = false;
+      pauseAutoScroll();
       renderCarousel(0);
       setActiveIndex(next);
+      scheduleAutoResume();
     },
-    [length, renderCarousel],
+    [length, pauseAutoScroll, renderCarousel, scheduleAutoResume],
   );
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      pauseAutoScroll();
+      return;
+    }
+    autoPausedRef.current = false;
+    startAutoScroll();
+    return () => {
+      stopAutoScroll();
+      if (autoResumeTimerRef.current) {
+        clearTimeout(autoResumeTimerRef.current);
+        autoResumeTimerRef.current = null;
+      }
+    };
+  }, [prefersReducedMotion, pauseAutoScroll, startAutoScroll, stopAutoScroll]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
@@ -133,10 +264,14 @@ export function SocialCarousel() {
       const target = event.target as HTMLElement;
       if (target.closest("button, [role='tab']")) return;
 
-      // Archive pointerdown
+      pauseAutoScroll();
+
+      // Continue drag from the live auto-scroll offset — no snap
+      const baseOffset = autoOffsetRef.current;
       const startX = event.clientX;
       let dragStart: number | null = startX;
-      dragOffsetRef.current = 0;
+      dragOffsetRef.current = baseOffset;
+      renderCarousel(baseOffset);
       let didDrag = false;
 
       stageRef.current?.setPointerCapture?.(event.pointerId);
@@ -159,7 +294,7 @@ export function SocialCarousel() {
           samples && samples.length > 0
             ? samples[samples.length - 1]
             : moveEvent;
-        const dx = latest.clientX - dragStart;
+        const dx = latest.clientX - startX;
         if (Math.abs(dx) > 8) {
           didDrag = true;
           draggingRef.current = true;
@@ -167,7 +302,7 @@ export function SocialCarousel() {
         }
         dragOffsetRef.current = Math.max(
           -DRAG_CLAMP,
-          Math.min(DRAG_CLAMP, dx / STEP_PX),
+          Math.min(DRAG_CLAMP, baseOffset + dx / STEP_PX),
         );
         renderCarousel(dragOffsetRef.current);
         moveEvent.preventDefault();
@@ -176,15 +311,19 @@ export function SocialCarousel() {
       // Archive pointerup
       const onUp = (upEvent: PointerEvent) => {
         if (dragStart === null) return;
-        const delta = upEvent.clientX - dragStart;
+        const delta = upEvent.clientX - startX;
         dragStart = null;
         endListeners();
         draggingRef.current = false;
         stageRef.current?.classList.remove("is-dragging");
 
         if (Math.abs(delta) < SNAP_THRESHOLD_PX) {
-          dragOffsetRef.current = 0;
-          renderCarousel(0);
+          // Keep exact release position — resume auto-scroll from here (no center snap)
+          autoOffsetRef.current = dragOffsetRef.current;
+          commitAutoWraps();
+          dragOffsetRef.current = autoOffsetRef.current;
+          renderCarousel(autoOffsetRef.current);
+          scheduleAutoResume();
           return;
         }
 
@@ -196,8 +335,19 @@ export function SocialCarousel() {
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onUp);
     },
-    [renderCarousel, setActive],
+    [
+      commitAutoWraps,
+      pauseAutoScroll,
+      renderCarousel,
+      scheduleAutoResume,
+      setActive,
+    ],
   );
+
+  const onWheel = useCallback(() => {
+    pauseAutoScroll();
+    scheduleAutoResume();
+  }, [pauseAutoScroll, scheduleAutoResume]);
 
   const onClickCapture = useCallback((event: MouseEvent) => {
     if (!suppressClickRef.current) return;
@@ -232,6 +382,7 @@ export function SocialCarousel() {
           className="carousel-stage relative z-10 mx-auto flex min-h-[310px] w-full max-w-[1242px] touch-pan-y items-center justify-center sm:min-h-[360px] lg:min-h-[420px]"
           style={{ perspective: `${PERSPECTIVE_PX}px` }}
           onPointerDown={onPointerDown}
+          onWheel={onWheel}
           onClickCapture={onClickCapture}
         >
           <ActiveCardGlow
@@ -241,7 +392,7 @@ export function SocialCarousel() {
 
           <div
             className="relative h-[min(44vh,420px)] min-h-[310px] w-full"
-            style={{ transformStyle: "preserve-3d" }}
+            style={{ transformStyle: "preserve-3d", transformOrigin: "50% 50%" }}
           >
             {SOCIAL_PLATFORMS.map((platform, index) => (
               <SocialCard

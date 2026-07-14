@@ -86,7 +86,6 @@ export function SocialCard({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/65 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
       style={{
-        transform: "translate(-50%, -50%)",
         transformStyle: "preserve-3d",
         background: theme.surface,
         boxShadow: layoutActive

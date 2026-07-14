@@ -560,6 +560,20 @@ body {
   animation: none !important;
 }
 
+/* Auto-scroll: compositor writes every frame — CSS transition/float cause micro-jitter */
+.carousel-stage.is-auto-scrolling .social-coverflow-card {
+  transition: none !important;
+}
+
+.carousel-stage.is-auto-scrolling .social-coverflow-card .coverflow-fx-layer {
+  transition: none !important;
+}
+
+.carousel-stage.is-auto-scrolling .social-coverflow-card.is-coverflow-center .coverflow-float,
+.carousel-stage.is-auto-scrolling .coverflow-under-shadow {
+  animation: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .social-coverflow-card.is-coverflow-center .coverflow-float,
   .coverflow-under-shadow {
