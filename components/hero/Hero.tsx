@@ -21,6 +21,8 @@ const STATUS_FADE = {
   exit: { opacity: 0 },
 };
 
+const MOBILE_MQ = "(max-width: 767px)";
+
 /**
  * Distance from the logo’s inline-end to the Y stem, measured from the
  * live text metrics of the single <h1> (no ghost nodes / splits).
@@ -49,6 +51,7 @@ function measureYStemInset(logo: HTMLElement): number | null {
 /**
  * Cinematic hero — brand, stream status, ambient music pill.
  * Live status from existing `/api/youtube` (shared fetch, no extra polling).
+ * Mobile (<768px) uses a tighter, centered composition; desktop is unchanged.
  */
 export function Hero() {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -60,37 +63,48 @@ export function Hero() {
 
   const logoRef = useRef<HTMLHeadingElement>(null);
   const [yStemInset, setYStemInset] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useLayoutEffect(() => {
     const logo = logoRef.current;
-    if (!logo) return;
+    const mq = window.matchMedia(MOBILE_MQ);
 
     const update = () => {
+      const mobile = mq.matches;
+      setIsMobile(mobile);
+      if (mobile || !logo) {
+        setYStemInset(null);
+        return;
+      }
       setYStemInset(measureYStemInset(logo));
     };
 
     update();
 
-    const ro = new ResizeObserver(update);
-    ro.observe(logo);
-
+    const ro = logo ? new ResizeObserver(update) : null;
+    if (logo) ro?.observe(logo);
+    mq.addEventListener("change", update);
     void document.fonts?.ready.then(update);
 
-    return () => ro.disconnect();
+    return () => {
+      ro?.disconnect();
+      mq.removeEventListener("change", update);
+    };
   }, []);
 
   const fadeTransition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const };
 
-  const statusAnchorStyle: CSSProperties = {
-    insetInlineEnd: yStemInset ?? 0,
-  };
+  /** Desktop only — Y-stem dock. Mobile centers under the logo. */
+  const statusAnchorStyle: CSSProperties | undefined = isMobile
+    ? undefined
+    : { insetInlineEnd: yStemInset ?? 0 };
 
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative z-20 flex items-end justify-center px-5 pb-2 pt-[max(2.25rem,calc(env(safe-area-inset-top)+1.75rem))] sm:px-8 sm:pb-2.5 sm:pt-[max(2.75rem,calc(env(safe-area-inset-top)+2.25rem))] lg:pb-3"
+      className="relative z-20 flex items-end justify-center px-5 pb-0 pt-[max(1.15rem,calc(env(safe-area-inset-top)+0.65rem))] sm:px-8 md:pb-2.5 md:pt-[max(2.75rem,calc(env(safe-area-inset-top)+2.25rem))] lg:pb-3"
       style={{ perspective: 1200 }}
     >
       <motion.div
@@ -112,7 +126,7 @@ export function Hero() {
             ref={logoRef}
             id="hero-heading"
             variants={prefersReducedMotion ? undefined : heroHeading}
-            className="text-display hero-glow max-w-full whitespace-nowrap text-[clamp(2.35rem,8.5vw,4.75rem)] leading-[0.9] text-white"
+            className="text-display hero-glow max-w-full whitespace-nowrap text-[clamp(1.93rem,7vw,3.9rem)] leading-[0.9] text-white md:text-[clamp(2.35rem,8.5vw,4.75rem)]"
             style={{ transform: "translateZ(28px)" }}
           >
             {BRAND.name}
@@ -120,13 +134,18 @@ export function Hero() {
 
           <motion.div
             variants={prefersReducedMotion ? undefined : heroItem}
-            className="relative mt-3 min-h-[2.75rem] w-full sm:min-h-[3.25rem]"
+            className="relative mt-2.5 min-h-[1.65rem] w-full md:mt-3 md:min-h-[3.25rem]"
             style={{ transform: "translateZ(16px)" }}
           >
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={isLive ? "live" : "offline"}
-                className="absolute -top-[13px] flex w-max flex-col items-end"
+                className={cn(
+                  "absolute flex w-max flex-col",
+                  isMobile
+                    ? "top-0 left-1/2 -translate-x-1/2 items-center"
+                    : "-top-[13px] items-end",
+                )}
                 style={statusAnchorStyle}
                 initial={STATUS_FADE.initial}
                 animate={STATUS_FADE.animate}
@@ -156,8 +175,11 @@ export function Hero() {
 
                 <p
                   className={cn(
-                    "text-brand mt-1.5 line-clamp-1 max-w-full text-right text-xs tracking-[0.02em] sm:text-sm",
-                    isLive && liveTitle ? "text-white/45" : "invisible",
+                    "text-brand mt-1 line-clamp-1 max-w-full text-xs tracking-[0.02em] sm:text-sm md:mt-1.5",
+                    isMobile ? "text-center" : "text-right",
+                    isLive && liveTitle
+                      ? "text-white/45"
+                      : "invisible max-md:hidden",
                   )}
                   aria-hidden={!isLive || !liveTitle}
                 >
@@ -168,7 +190,7 @@ export function Hero() {
           </motion.div>
         </div>
 
-        <div className="mt-2.5 sm:mt-3">
+        <div className="mt-1 md:mt-3">
           <MusicController />
         </div>
       </motion.div>

@@ -90,7 +90,7 @@ export function SocialCard({
       }}
       className={cn(
         "social-coverflow-card absolute top-1/2 left-1/2 overflow-hidden will-change-transform",
-        "w-[clamp(137px,19vw,228px)] aspect-square",
+        "w-[clamp(112px,36vw,158px)] aspect-square md:w-[clamp(137px,19vw,228px)]",
         "rounded-[28px] border sm:rounded-[32px]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/65 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
@@ -131,7 +131,7 @@ export function SocialCard({
 
         <SocialIcon
           id={platform.icon}
-          className="coverflow-float icon-crisp relative z-[1] aspect-square h-[65%] w-[65%] shrink-0 drop-shadow-[0_10px_22px_rgba(0,0,0,0.32)]"
+          className="coverflow-float icon-crisp relative z-[1] aspect-square h-[65%] w-[65%] shrink-0 drop-shadow-[0_6px_12px_rgba(0,0,0,0.28)] md:drop-shadow-[0_10px_22px_rgba(0,0,0,0.32)]"
           style={{ color: theme.accent }}
         />
       </div>

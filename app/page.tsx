@@ -12,7 +12,8 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       <Hero />
-      <div className="-mt-[30px]">
+      {/* Mobile: pull carousel into the Hero band for above-the-fold fit */}
+      <div className="-mt-11 md:-mt-[30px]">
         <ConnectStage />
       </div>
       <div className="-mt-[10px] sm:-mt-[12px]">

@@ -9,6 +9,9 @@ import { SetupPanel } from "@/components/connect/SetupPanel";
 const PANEL_HEIGHT =
   "h-[min(28vh,270px)] min-h-[200px] sm:min-h-[228px] lg:min-h-[248px] xl:min-h-[270px]";
 
+/** Mobile stack — shorter so Recent Videos stays reachable */
+const MOBILE_PANEL_HEIGHT = "h-[min(26vh,220px)] min-h-[180px]";
+
 /** +20% width vs prior pass */
 const LEFT_WIDTH =
   "w-[10.5rem] xl:w-[12.6rem] 2xl:w-[13.5rem]";
@@ -18,6 +21,7 @@ const RIGHT_WIDTH =
 /**
  * Connect band — Social Carousel remains the centerpiece.
  * Side panels float near the viewport edges with a subtle inward tilt.
+ * Mobile (<768px): panels stack vertically below achievement pills.
  */
 export function ConnectStage() {
   return (
@@ -49,8 +53,18 @@ export function ConnectStage() {
         <SocialCarousel />
       </div>
 
-      <div className="relative z-10 mt-3.5 pb-8 sm:mt-4 sm:pb-9">
+      <div className="relative z-10 mt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:mt-4 md:pb-9">
         <AchievementChips />
+
+        {/* Mobile — stacked below pills (Main Games → My Setup → Recent Videos) */}
+        <div className="container-page mt-3 flex flex-col gap-3 md:hidden">
+          <div className={MOBILE_PANEL_HEIGHT}>
+            <NowPlayingPanel />
+          </div>
+          <div className={MOBILE_PANEL_HEIGHT}>
+            <SetupPanel />
+          </div>
+        </div>
       </div>
 
       {/* Tablet — panels below carousel */}
@@ -60,25 +74,6 @@ export function ConnectStage() {
         </div>
         <div className={PANEL_HEIGHT}>
           <SetupPanel />
-        </div>
-      </div>
-
-      {/* Mobile — horizontal swipe cards */}
-      <div className="mt-3 md:hidden">
-        <div
-          className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Games and setup"
-        >
-          <div
-            className={`w-[min(82vw,20rem)] shrink-0 snap-center ${PANEL_HEIGHT}`}
-          >
-            <NowPlayingPanel />
-          </div>
-          <div
-            className={`w-[min(82vw,20rem)] shrink-0 snap-center ${PANEL_HEIGHT}`}
-          >
-            <SetupPanel />
-          </div>
         </div>
       </div>
     </div>

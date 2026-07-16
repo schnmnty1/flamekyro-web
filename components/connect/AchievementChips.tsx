@@ -19,7 +19,7 @@ export function AchievementChips({ className }: AchievementChipsProps) {
     <ul
       aria-label="Achievements"
       className={cn(
-        "flex flex-wrap items-center justify-center gap-2 px-4 sm:gap-2.5",
+        "flex flex-wrap items-center justify-center gap-1.5 px-2.5 md:gap-2.5 md:px-4",
         className,
       )}
     >
@@ -27,7 +27,7 @@ export function AchievementChips({ className }: AchievementChipsProps) {
         <li key={item.id}>
           <span
             className={cn(
-              "glass-panel inline-flex items-center gap-1.5 rounded-[13px] px-3 py-1.5 sm:gap-2 sm:px-3.5 sm:py-1.5",
+              "glass-panel inline-flex items-center gap-1 rounded-[13px] px-2.5 py-1.5 md:gap-2 md:px-3.5",
             )}
           >
             <span

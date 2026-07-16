@@ -16,8 +16,10 @@ import { SocialCard } from "@/components/social/SocialCard";
 import {
   DRAG_CLAMP,
   PERSPECTIVE_PX,
+  PERSPECTIVE_PX_MOBILE,
   SNAP_THRESHOLD_PX,
   STEP_PX,
+  STEP_PX_MOBILE,
   applyArchiveCardPaint,
   paintArchiveCard,
   signedOffset,
@@ -32,6 +34,7 @@ const AUTO_MS_PER_CARD = 2_500;
 const AUTO_RESUME_MS = 750;
 /** Pointer travel below this is a click (open link); at/above starts drag */
 const CLICK_MOVE_MAX_PX = 5;
+const MOBILE_MQ = "(max-width: 767px)";
 
 /**
  * Social carousel — archived FlameKyro v2 drag pipeline.
@@ -68,8 +71,12 @@ export function SocialCarousel() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [liteEffects, setLiteEffects] = useState(false);
+  const [perspectivePx, setPerspectivePx] = useState(PERSPECTIVE_PX);
   const prefersReducedMotion = usePrefersReducedMotion();
   const activePlatform = SOCIAL_PLATFORMS[activeIndex];
+  /** Coverflow pitch — desktop STEP_PX, mobile STEP_PX_MOBILE */
+  const stepPxRef = useRef(STEP_PX);
+  const reducedFxRef = useRef(false);
 
   /**
    * Flat 2D hit proxy — mirrors the front card's screen rect.
@@ -116,11 +123,13 @@ export function SocialCarousel() {
   /** Archive renderCarousel(offsetShift) — DOM only */
   const renderCarousel = useCallback(
     (offsetShift: number) => {
+      const stepPx = stepPxRef.current;
+      const reducedFx = reducedFxRef.current;
       for (let i = 0; i < length; i += 1) {
         const el = cardRefs.current[i];
         if (!el) continue;
         const offset = signedOffset(i, activeRef.current, length) + offsetShift;
-        applyArchiveCardPaint(el, paintArchiveCard(offset));
+        applyArchiveCardPaint(el, paintArchiveCard(offset, stepPx, reducedFx));
       }
       syncHitTarget();
     },
@@ -279,6 +288,23 @@ export function SocialCarousel() {
     };
   }, []);
 
+  /** Mobile coverflow pitch + perspective — desktop constants untouched */
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const sync = () => {
+      const mobile = mq.matches;
+      stepPxRef.current = mobile ? STEP_PX_MOBILE : STEP_PX;
+      reducedFxRef.current = mobile;
+      setPerspectivePx(mobile ? PERSPECTIVE_PX_MOBILE : PERSPECTIVE_PX);
+      renderCarousel(
+        draggingRef.current ? dragOffsetRef.current : autoOffsetRef.current,
+      );
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [renderCarousel]);
+
   const setActive = useCallback(
     (index: number) => {
       const next = wrapIndex(index, length);
@@ -406,9 +432,10 @@ export function SocialCarousel() {
         }
 
         // Archive drag math: same sign as pointer (left → negative offset)
+        const stepPx = stepPxRef.current;
         dragOffsetRef.current = Math.max(
           -DRAG_CLAMP,
-          Math.min(DRAG_CLAMP, baseOffset + dx / STEP_PX),
+          Math.min(DRAG_CLAMP, baseOffset + dx / stepPx),
         );
         renderCarousel(dragOffsetRef.current);
         moveEvent.preventDefault();
@@ -496,7 +523,7 @@ export function SocialCarousel() {
   return (
     <section
       aria-label="Social platforms carousel"
-      className="relative z-10 overflow-x-clip pb-4 pt-1 sm:pb-5 sm:pt-2"
+      className="relative z-10 overflow-x-clip pb-2 pt-0 md:pb-5 md:pt-2"
     >
       <div
         role="region"
@@ -508,8 +535,8 @@ export function SocialCarousel() {
       >
         <div
           ref={stageRef}
-          className="carousel-stage relative z-10 mx-auto flex min-h-[310px] w-full max-w-[1242px] touch-pan-y items-center justify-center sm:min-h-[360px] lg:min-h-[420px]"
-          style={{ perspective: `${PERSPECTIVE_PX}px` }}
+          className="carousel-stage relative z-10 mx-auto flex min-h-[200px] w-full max-w-[1242px] touch-pan-y items-center justify-center md:min-h-[360px] lg:min-h-[420px]"
+          style={{ perspective: `${perspectivePx}px` }}
           onPointerDown={onPointerDown}
           onWheel={onWheel}
           onClickCapture={onClickCapture}
@@ -520,7 +547,7 @@ export function SocialCarousel() {
           />
 
           <div
-            className="relative h-[min(44vh,420px)] min-h-[310px] w-full"
+            className="relative h-[min(26vh,210px)] min-h-[200px] w-full md:h-[min(44vh,420px)] md:min-h-[310px]"
             style={{ transformStyle: "preserve-3d", transformOrigin: "50% 50%" }}
           >
             {SOCIAL_PLATFORMS.map((platform, index) => (
@@ -552,7 +579,7 @@ export function SocialCarousel() {
           </span>
         </div>
 
-        <div className="mt-3 flex justify-center sm:mt-4">
+        <div className="mt-1.5 flex justify-center md:mt-4">
           <CarouselPagination
             platforms={SOCIAL_PLATFORMS}
             activeIndex={activeIndex}

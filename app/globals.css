@@ -610,3 +610,51 @@ body {
     animation: none;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Mobile (<768px) — lighter blur/glow, keep desktop identical                */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  :root {
+    --glass-blur: 12px;
+    --glass-blur-strong: 16px;
+  }
+
+  .hero-glow {
+    text-shadow:
+      0 1px 0 color-mix(in srgb, var(--text) 18%, transparent),
+      0 0 1px color-mix(in srgb, var(--glow) 40%, transparent),
+      0 0 10px color-mix(in srgb, var(--glow) 12%, transparent),
+      0 8px 24px color-mix(in srgb, #000 45%, transparent);
+  }
+
+  .social-coverflow-card {
+    /* Prefer compositor; softer idle bloom */
+    box-shadow:
+      0 14px 28px rgba(0, 0, 0, 0.38),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .social-coverflow-card.is-coverflow-center {
+    box-shadow:
+      0 22px 40px rgba(0, 0, 0, 0.48),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .social-coverflow-card.is-coverflow-center .coverflow-float,
+  .coverflow-under-shadow {
+    animation: none;
+  }
+
+  /* Kill iOS/Android grey flash on tap — interactive controls only */
+  a[href],
+  button,
+  [role="button"],
+  .glass-control,
+  .coverflow-hit-target,
+  .social-coverflow-card,
+  .carousel-stage {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

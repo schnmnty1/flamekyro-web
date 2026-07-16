@@ -5,6 +5,8 @@
 
 /** Neighbor pitch — breathing room between cards (symmetric translateX) */
 export const STEP_PX = 200;
+/** Mobile (<768px) — tighter pitch so neighbors stay on-screen */
+export const STEP_PX_MOBILE = 118;
 export const DEPTH_STEP = 120;
 export const ROTATE_STEP = -34;
 export const SCALE_STEP = 0.08;
@@ -12,6 +14,8 @@ export const OPACITY_STEP = 0.13;
 export const DRAG_CLAMP = 1.25;
 export const SNAP_THRESHOLD_PX = 42;
 export const PERSPECTIVE_PX = 1200;
+/** Mobile — softer depth, less edge clipping */
+export const PERSPECTIVE_PX_MOBILE = 760;
 
 export function wrapIndex(index: number, length: number): number {
   if (length <= 0) return 0;
@@ -66,10 +70,14 @@ export type ApplyPaintOptions = {
   transformOnly?: boolean;
 };
 
-export function paintArchiveCard(offset: number): ArchiveCardPaint {
+export function paintArchiveCard(
+  offset: number,
+  stepPx: number = STEP_PX,
+  reducedFx: boolean = false,
+): ArchiveCardPaint {
   const abs = Math.abs(offset);
   const clamped = Math.min(abs, 4);
-  const x = offset * STEP_PX;
+  const x = offset * stepPx;
   const z = -clamped * DEPTH_STEP;
   const rotate = offset * ROTATE_STEP;
   const scale = 1 - clamped * SCALE_STEP;
@@ -81,6 +89,7 @@ export function paintArchiveCard(offset: number): ArchiveCardPaint {
    * Cards themselves stay pointer-events:none; a flat hit proxy uses this flag.
    */
   const isFront = abs < 0.5;
+  const blurPx = reducedFx ? clamped * 0.15 : clamped * 0.4;
 
   return {
     transform: `translate(-50%, -50%) translate3d(${x}px, 0, ${z}px) rotateY(${rotate}deg) scale(${scale})`,
@@ -88,7 +97,7 @@ export function paintArchiveCard(offset: number): ArchiveCardPaint {
     filter:
       offset === 0
         ? "brightness(1)"
-        : `brightness(${0.75 - clamped * 0.04}) blur(${clamped * 0.4}px)`,
+        : `brightness(${0.75 - clamped * 0.04}) blur(${blurPx}px)`,
     zIndex: Math.round(20 - clamped),
     // Hit-testing is owned by the flat coverflow hit proxy (preserve-3d safe)
     pointerEvents: "none",
