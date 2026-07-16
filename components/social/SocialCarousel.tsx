@@ -523,7 +523,7 @@ export function SocialCarousel() {
   return (
     <section
       aria-label="Social platforms carousel"
-      className="relative z-10 overflow-x-clip pb-2 pt-0 md:pb-5 md:pt-2"
+      className="relative z-10 overflow-x-clip pb-2 pt-4 md:pb-5 md:pt-2"
     >
       <div
         role="region"
