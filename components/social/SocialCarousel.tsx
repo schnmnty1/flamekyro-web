@@ -197,11 +197,16 @@ export function SocialCarousel() {
   }, [stopAutoScroll]);
 
   const stopInertia = useCallback(() => {
-    // Invalidate any scheduled tick/finish so a late frame cannot snap or resume
+    // Invalidate every prior generation: RAF ticks, finish/snap, and resume timers
     inertiaGenRef.current += 1;
-    if (!inertiaRafRef.current) return;
-    cancelAnimationFrame(inertiaRafRef.current);
-    inertiaRafRef.current = 0;
+    if (inertiaRafRef.current) {
+      cancelAnimationFrame(inertiaRafRef.current);
+      inertiaRafRef.current = 0;
+    }
+    if (autoResumeTimerRef.current) {
+      clearTimeout(autoResumeTimerRef.current);
+      autoResumeTimerRef.current = null;
+    }
   }, []);
 
   /** Pause + snapshot + paint — position cannot change until interaction ends */
@@ -234,7 +239,8 @@ export function SocialCarousel() {
     if (
       prefersReducedMotion ||
       autoPausedRef.current ||
-      interactionLockRef.current
+      interactionLockRef.current ||
+      inertiaRafRef.current
     ) {
       return;
     }
@@ -246,7 +252,8 @@ export function SocialCarousel() {
       if (
         autoPausedRef.current ||
         draggingRef.current ||
-        interactionLockRef.current
+        interactionLockRef.current ||
+        inertiaRafRef.current
       ) {
         autoRafRef.current = 0;
         autoLastTsRef.current = 0;
@@ -281,9 +288,14 @@ export function SocialCarousel() {
     if (autoResumeTimerRef.current) {
       clearTimeout(autoResumeTimerRef.current);
     }
+    // Bind resume to the current inertia generation — stopInertia invalidates it
+    const resumeGen = inertiaGenRef.current;
     autoResumeTimerRef.current = setTimeout(() => {
       autoResumeTimerRef.current = null;
-      if (draggingRef.current || interactionLockRef.current) return;
+      if (resumeGen !== inertiaGenRef.current) return;
+      if (draggingRef.current || interactionLockRef.current || inertiaRafRef.current) {
+        return;
+      }
       autoPausedRef.current = false;
       startAutoScroll();
     }, AUTO_RESUME_MS);
@@ -291,42 +303,65 @@ export function SocialCarousel() {
 
   /**
    * Touch-only inertial coast after release.
-   * Projects a resting card from velocity, then ease-out exponential to it
-   * (no overshoot / bounce). Returns false when velocity is too low to coast.
+   *
+   * Architecture (not value tuning):
+   * - Begins from the live drag offset (single source of truth).
+   * - Target is always in the swipe direction — never back toward the prior card.
+   * - Ease-out only interpolates start→target; snap runs after inertia completes.
    */
   const startInertia = useCallback(
-    (velocityPxPerMs: number) => {
+    (velocityPxPerMs: number, swipeDeltaPx: number) => {
       const stepPx = stepPxRef.current;
+      // Prefer measured velocity; fall back to swipe delta for direction only
       let v = velocityPxPerMs / stepPx;
-      if (Math.abs(v) < INERTIA_MIN_VELOCITY) return false;
+      if (Math.abs(v) < INERTIA_MIN_VELOCITY) {
+        // Direction from the gesture, magnitude at the minimum gate
+        const dir = Math.sign(swipeDeltaPx);
+        if (dir === 0) return false;
+        // Too slow for coast — let the existing snap path handle it
+        return false;
+      }
 
       v = Math.max(
         -INERTIA_MAX_VELOCITY,
         Math.min(INERTIA_MAX_VELOCITY, v),
       );
 
-      const start = autoOffsetRef.current;
-      // Free coast distance under exponential friction, then clamp + snap
-      const freeTravel = v * INERTIA_TAU_MS;
-      const travel = Math.max(
-        -INERTIA_MAX_TRAVEL,
-        Math.min(INERTIA_MAX_TRAVEL, freeTravel),
-      );
-      const ideal = start + travel;
-      let target = Math.round(ideal);
-      if (target - start > INERTIA_MAX_TRAVEL) {
-        target = Math.floor(start + INERTIA_MAX_TRAVEL);
-      } else if (start - target > INERTIA_MAX_TRAVEL) {
-        target = Math.ceil(start - INERTIA_MAX_TRAVEL);
-      }
+      // Live drag offset owns the release frame (synced on every move)
+      const start = dragOffsetRef.current;
+      autoOffsetRef.current = start;
 
-      // Already on the resting card — use existing snap path
-      if (target === Math.round(start) && Math.abs(start - target) < 0.08) {
-        return false;
-      }
+      const dir = Math.sign(v);
+      if (dir === 0) return false;
 
-      const distance = Math.abs(target - start);
-      if (distance < 0.02) return false;
+      // Next resting card strictly in the swipe direction (never behind the finger)
+      const nextCard =
+        dir > 0
+          ? Number.isInteger(start)
+            ? start + 1
+            : Math.ceil(start)
+          : Number.isInteger(start)
+            ? start - 1
+            : Math.floor(start);
+
+      const projected = start + v * INERTIA_TAU_MS;
+      let target =
+        dir > 0
+          ? Math.ceil(projected - 1e-9)
+          : Math.floor(projected + 1e-9);
+
+      // Always at least the next card when inertia engages
+      target = dir > 0 ? Math.max(target, nextCard) : Math.min(target, nextCard);
+
+      // Cap additional travel (~1.5 cards) without reversing direction
+      const maxReach = start + dir * INERTIA_MAX_TRAVEL;
+      target =
+        dir > 0
+          ? Math.min(target, Math.floor(maxReach + 1e-9))
+          : Math.max(target, Math.ceil(maxReach - 1e-9));
+
+      // If clamp collapsed the advance, inertia has nothing to do
+      if (dir > 0 ? target <= start : target >= start) return false;
 
       const speedNorm = Math.min(1, Math.abs(v) / INERTIA_MAX_VELOCITY);
       const duration =
@@ -347,13 +382,17 @@ export function SocialCarousel() {
       const t0 = performance.now();
 
       const finish = () => {
+        // Re-check at every step — a newer touch must win over this snap/resume
         if (gen !== inertiaGenRef.current) return;
         inertiaRafRef.current = 0;
         autoOffsetRef.current = target;
+        if (gen !== inertiaGenRef.current) return;
         commitAutoWraps();
         dragOffsetRef.current = autoOffsetRef.current;
+        if (gen !== inertiaGenRef.current) return;
         renderCarousel(autoOffsetRef.current);
         setActiveIndex(activeRef.current);
+        if (gen !== inertiaGenRef.current) return;
         clearPointerPaintLock();
         interactionLockRef.current = false;
         scheduleAutoResume();
@@ -363,13 +402,15 @@ export function SocialCarousel() {
         if (gen !== inertiaGenRef.current) return;
 
         const t = Math.min(1, (now - t0) / duration);
-        // Ease-out exponential — monotonic, ends exactly at 1 (no overshoot)
         const e = (1 - Math.exp(-INERTIA_EASE_K * t)) / easeDen;
-        // Keep raw offset during coast — wrap only at rest (avoids mid-flight jumps)
-        autoOffsetRef.current = start + (target - start) * e;
-        dragOffsetRef.current = autoOffsetRef.current;
-        renderCarousel(autoOffsetRef.current);
+        // Monotonic start→target only (never toward the previous center)
+        const offset = start + (target - start) * e;
+        if (gen !== inertiaGenRef.current) return;
+        autoOffsetRef.current = offset;
+        dragOffsetRef.current = offset;
+        renderCarousel(offset);
 
+        if (gen !== inertiaGenRef.current) return;
         if (t >= 1) {
           finish();
           return;
@@ -404,9 +445,12 @@ export function SocialCarousel() {
     renderCarousel(autoOffsetRef.current);
   }, [renderCarousel]);
 
-  // Re-paint in the same frame as activeIndex updates (glow / layoutActive)
-  // so React style commits cannot leave cards on a stale transform for a frame.
+  // Glow / layoutActive follows activeIndex — never overwrite the live offset
+  // while the finger or inertia owns the animation.
   useLayoutEffect(() => {
+    if (draggingRef.current || inertiaRafRef.current || interactionLockRef.current) {
+      return;
+    }
     renderCarousel(autoOffsetRef.current);
   }, [activeIndex, renderCarousel]);
 
@@ -592,12 +636,15 @@ export function SocialCarousel() {
         }
 
         // Archive drag math: same sign as pointer (left → negative offset)
+        // Finger owns both refs — one animation source while down.
         const stepPx = stepPxRef.current;
-        dragOffsetRef.current = Math.max(
+        const nextOffset = Math.max(
           -DRAG_CLAMP,
           Math.min(DRAG_CLAMP, baseOffset + dx / stepPx),
         );
-        renderCarousel(dragOffsetRef.current);
+        dragOffsetRef.current = nextOffset;
+        autoOffsetRef.current = nextOffset;
+        renderCarousel(nextOffset);
         moveEvent.preventDefault();
       };
 
@@ -605,7 +652,7 @@ export function SocialCarousel() {
         if (!tracking || upEvent.pointerId !== pointerId) return;
         const delta = upEvent.clientX - startX;
 
-        // Decay stale velocity if the finger paused before release
+        // If the finger paused before release, drop velocity (direction kept via delta in snap)
         const idle = performance.now() - lastT;
         if (idle > 80) velocityX = 0;
 
@@ -636,16 +683,18 @@ export function SocialCarousel() {
             /* already released */
           }
 
+          // Release begins from the live drag offset — do not clear paint lock yet
           autoOffsetRef.current = dragOffsetRef.current;
-          if (startInertia(velocityX)) return;
+          if (startInertia(velocityX, delta)) return;
 
-          clearPointerPaintLock();
-          interactionLockRef.current = false;
+          // Inertia skipped (low velocity) — existing snap, transitions still off
           if (Math.abs(delta) < SNAP_THRESHOLD_PX) {
             commitAutoWraps();
             dragOffsetRef.current = autoOffsetRef.current;
             renderCarousel(autoOffsetRef.current);
             setActiveIndex(activeRef.current);
+            clearPointerPaintLock();
+            interactionLockRef.current = false;
             scheduleAutoResume();
             return;
           }
@@ -712,7 +761,7 @@ export function SocialCarousel() {
 
   const goTo = useCallback(
     (index: number) => {
-      if (draggingRef.current) return;
+      if (draggingRef.current || inertiaRafRef.current) return;
       setActive(index);
     },
     [setActive],
