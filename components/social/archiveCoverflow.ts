@@ -5,8 +5,8 @@
 
 /** Neighbor pitch — breathing room between cards (symmetric translateX) */
 export const STEP_PX = 200;
-/** Mobile (<768px) — tighter pitch so neighbors stay on-screen */
-export const STEP_PX_MOBILE = 129;
+/** Mobile (<768px) — neighbor pitch; keeps ~75–80% of side cards visible */
+export const STEP_PX_MOBILE = 136;
 export const DEPTH_STEP = 120;
 export const ROTATE_STEP = -34;
 export const SCALE_STEP = 0.08;
