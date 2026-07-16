@@ -17,15 +17,15 @@ const RIGHT_WIDTH =
 
 /**
  * Connect band — Social Carousel remains the centerpiece.
- * Side panels dock closer with a subtle inward tilt.
+ * Side panels float near the viewport edges with a subtle inward tilt.
  */
 export function ConnectStage() {
   return (
     <div className="relative z-10" style={{ perspective: 1400 }}>
-      {/* Desktop / laptop — floating side panels, pulled ~100px toward carousel */}
+      {/* Desktop / laptop — floating side panels, docked toward screen edges */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden h-[min(44vh,420px)] min-h-[310px] items-center lg:flex sm:min-h-[360px] lg:min-h-[380px] xl:min-h-[420px]">
         <div
-          className={`pointer-events-auto absolute left-[6.5rem] top-1/2 xl:left-[7.25rem] 2xl:left-[8rem] ${LEFT_WIDTH} ${PANEL_HEIGHT}`}
+          className={`pointer-events-auto absolute left-[2rem] top-1/2 xl:left-[2.5rem] 2xl:left-[3rem] ${LEFT_WIDTH} ${PANEL_HEIGHT}`}
           style={{
             transform: "translateY(-50%) rotateY(5deg)",
             transformOrigin: "100% 50%",
@@ -34,7 +34,7 @@ export function ConnectStage() {
           <NowPlayingPanel />
         </div>
         <div
-          className={`pointer-events-auto absolute right-[6.5rem] top-1/2 xl:right-[7.25rem] 2xl:right-[8rem] ${RIGHT_WIDTH} ${PANEL_HEIGHT}`}
+          className={`pointer-events-auto absolute right-[2rem] top-1/2 xl:right-[2.5rem] 2xl:right-[3rem] ${RIGHT_WIDTH} ${PANEL_HEIGHT}`}
           style={{
             transform: "translateY(-50%) rotateY(-5deg)",
             transformOrigin: "0% 50%",
@@ -44,7 +44,7 @@ export function ConnectStage() {
         </div>
       </div>
 
-      {/* Tighter inset — panels sit ~80–120px closer to the stage */}
+      {/* Stage inset unchanged — only panel edge offsets move */}
       <div className="lg:px-[6.25rem] xl:px-[8rem] 2xl:px-[9.25rem]">
         <SocialCarousel />
       </div>
