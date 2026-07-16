@@ -36,6 +36,21 @@ const AUTO_RESUME_MS = 750;
 const CLICK_MOVE_MAX_PX = 5;
 const MOBILE_MQ = "(max-width: 767px)";
 
+/** Touch inertia (offset-units / ms) — desktop mouse snap unchanged */
+const INERTIA_MIN_VELOCITY = 0.00085;
+const INERTIA_MAX_VELOCITY = 0.0065;
+/**
+ * Asymptotic travel ≈ v * tau for v(t)=v0·e^(−t/tau).
+ * Tuned so a normal swipe coasts ~450ms; fast swipes stretch toward 600ms.
+ */
+const INERTIA_TAU_MS = 120;
+const INERTIA_DURATION_MIN_MS = 450;
+const INERTIA_DURATION_MAX_MS = 600;
+/** Cap coast distance after release — about 1.5 cards */
+const INERTIA_MAX_TRAVEL = 1.5;
+/** Ease-out steepness — higher = quicker settle, never overshoots */
+const INERTIA_EASE_K = 4.2;
+
 /**
  * Social carousel — archived FlameKyro v2 drag pipeline.
  *
@@ -68,6 +83,9 @@ export function SocialCarousel() {
   const interactionLockRef = useRef(false);
   const frozenActiveRef = useRef(0);
   const frozenOffsetRef = useRef(0);
+  const inertiaRafRef = useRef(0);
+  /** Bumped to invalidate an in-flight inertia tick/finish (touch steals control) */
+  const inertiaGenRef = useRef(0);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [liteEffects, setLiteEffects] = useState(false);
@@ -178,8 +196,18 @@ export function SocialCarousel() {
     stopAutoScroll();
   }, [stopAutoScroll]);
 
+  const stopInertia = useCallback(() => {
+    // Invalidate any scheduled tick/finish so a late frame cannot snap or resume
+    inertiaGenRef.current += 1;
+    if (!inertiaRafRef.current) return;
+    cancelAnimationFrame(inertiaRafRef.current);
+    inertiaRafRef.current = 0;
+  }, []);
+
   /** Pause + snapshot + paint — position cannot change until interaction ends */
   const freezeAtCurrentPosition = useCallback(() => {
+    // Interrupt momentum immediately — keep the current frame, no projected snap
+    stopInertia();
     pauseAutoScroll();
     interactionLockRef.current = true;
     frozenActiveRef.current = activeRef.current;
@@ -192,7 +220,15 @@ export function SocialCarousel() {
       el.style.transition = "none";
     }
     renderCarousel(frozenOffsetRef.current);
-  }, [pauseAutoScroll, renderCarousel]);
+  }, [pauseAutoScroll, renderCarousel, stopInertia]);
+
+  const clearPointerPaintLock = useCallback(() => {
+    stageRef.current?.classList.remove("is-pointer-active");
+    for (const el of cardRefs.current) {
+      if (!el) continue;
+      el.style.transition = "";
+    }
+  }, []);
 
   const startAutoScroll = useCallback(() => {
     if (
@@ -253,6 +289,107 @@ export function SocialCarousel() {
     }, AUTO_RESUME_MS);
   }, [prefersReducedMotion, startAutoScroll]);
 
+  /**
+   * Touch-only inertial coast after release.
+   * Projects a resting card from velocity, then ease-out exponential to it
+   * (no overshoot / bounce). Returns false when velocity is too low to coast.
+   */
+  const startInertia = useCallback(
+    (velocityPxPerMs: number) => {
+      const stepPx = stepPxRef.current;
+      let v = velocityPxPerMs / stepPx;
+      if (Math.abs(v) < INERTIA_MIN_VELOCITY) return false;
+
+      v = Math.max(
+        -INERTIA_MAX_VELOCITY,
+        Math.min(INERTIA_MAX_VELOCITY, v),
+      );
+
+      const start = autoOffsetRef.current;
+      // Free coast distance under exponential friction, then clamp + snap
+      const freeTravel = v * INERTIA_TAU_MS;
+      const travel = Math.max(
+        -INERTIA_MAX_TRAVEL,
+        Math.min(INERTIA_MAX_TRAVEL, freeTravel),
+      );
+      const ideal = start + travel;
+      let target = Math.round(ideal);
+      if (target - start > INERTIA_MAX_TRAVEL) {
+        target = Math.floor(start + INERTIA_MAX_TRAVEL);
+      } else if (start - target > INERTIA_MAX_TRAVEL) {
+        target = Math.ceil(start - INERTIA_MAX_TRAVEL);
+      }
+
+      // Already on the resting card — use existing snap path
+      if (target === Math.round(start) && Math.abs(start - target) < 0.08) {
+        return false;
+      }
+
+      const distance = Math.abs(target - start);
+      if (distance < 0.02) return false;
+
+      const speedNorm = Math.min(1, Math.abs(v) / INERTIA_MAX_VELOCITY);
+      const duration =
+        INERTIA_DURATION_MIN_MS +
+        speedNorm * (INERTIA_DURATION_MAX_MS - INERTIA_DURATION_MIN_MS);
+      const easeDen = 1 - Math.exp(-INERTIA_EASE_K);
+
+      stopInertia();
+      pauseAutoScroll();
+      interactionLockRef.current = true;
+      stageRef.current?.classList.add("is-pointer-active");
+      for (const el of cardRefs.current) {
+        if (!el) continue;
+        el.style.transition = "none";
+      }
+
+      const gen = inertiaGenRef.current;
+      const t0 = performance.now();
+
+      const finish = () => {
+        if (gen !== inertiaGenRef.current) return;
+        inertiaRafRef.current = 0;
+        autoOffsetRef.current = target;
+        commitAutoWraps();
+        dragOffsetRef.current = autoOffsetRef.current;
+        renderCarousel(autoOffsetRef.current);
+        setActiveIndex(activeRef.current);
+        clearPointerPaintLock();
+        interactionLockRef.current = false;
+        scheduleAutoResume();
+      };
+
+      const tick = (now: number) => {
+        if (gen !== inertiaGenRef.current) return;
+
+        const t = Math.min(1, (now - t0) / duration);
+        // Ease-out exponential — monotonic, ends exactly at 1 (no overshoot)
+        const e = (1 - Math.exp(-INERTIA_EASE_K * t)) / easeDen;
+        // Keep raw offset during coast — wrap only at rest (avoids mid-flight jumps)
+        autoOffsetRef.current = start + (target - start) * e;
+        dragOffsetRef.current = autoOffsetRef.current;
+        renderCarousel(autoOffsetRef.current);
+
+        if (t >= 1) {
+          finish();
+          return;
+        }
+        inertiaRafRef.current = requestAnimationFrame(tick);
+      };
+
+      inertiaRafRef.current = requestAnimationFrame(tick);
+      return true;
+    },
+    [
+      clearPointerPaintLock,
+      commitAutoWraps,
+      pauseAutoScroll,
+      renderCarousel,
+      scheduleAutoResume,
+      stopInertia,
+    ],
+  );
+
   const setCardRef = useCallback(
     (index: number, el: HTMLElement | null) => {
       cardRefs.current[index] = el;
@@ -308,17 +445,26 @@ export function SocialCarousel() {
   const setActive = useCallback(
     (index: number) => {
       const next = wrapIndex(index, length);
+      stopInertia();
       interactionLockRef.current = false;
       activeRef.current = next;
       dragOffsetRef.current = 0;
       autoOffsetRef.current = 0;
       draggingRef.current = false;
       pauseAutoScroll();
+      clearPointerPaintLock();
       renderCarousel(0);
       setActiveIndex(next);
       scheduleAutoResume();
     },
-    [length, pauseAutoScroll, renderCarousel, scheduleAutoResume],
+    [
+      clearPointerPaintLock,
+      length,
+      pauseAutoScroll,
+      renderCarousel,
+      scheduleAutoResume,
+      stopInertia,
+    ],
   );
 
   useEffect(() => {
@@ -338,6 +484,11 @@ export function SocialCarousel() {
       }
       autoLastTsRef.current = 0;
       setAutoScrollingClass(false);
+      if (inertiaRafRef.current) {
+        cancelAnimationFrame(inertiaRafRef.current);
+        inertiaRafRef.current = 0;
+      }
+      inertiaGenRef.current += 1;
     };
   }, [
     prefersReducedMotion,
@@ -385,8 +536,13 @@ export function SocialCarousel() {
       const startY = event.clientY;
       const baseOffset = frozenOffsetRef.current;
       const baseActive = frozenActiveRef.current;
+      const isTouchPointer =
+        event.pointerType === "touch" || event.pointerType === "pen";
       let tracking = true;
       let didDrag = false;
+      let lastX = startX;
+      let lastT = performance.now();
+      let velocityX = 0;
 
       const endListeners = () => {
         window.removeEventListener("pointermove", onMove);
@@ -399,11 +555,7 @@ export function SocialCarousel() {
         endListeners();
         draggingRef.current = false;
         stageRef.current?.classList.remove("is-dragging");
-        stageRef.current?.classList.remove("is-pointer-active");
-        for (const el of cardRefs.current) {
-          if (!el) continue;
-          el.style.transition = "";
-        }
+        clearPointerPaintLock();
         try {
           stageRef.current?.releasePointerCapture?.(pointerId);
         } catch {
@@ -417,6 +569,14 @@ export function SocialCarousel() {
         const dx = moveEvent.clientX - startX;
         const dy = moveEvent.clientY - startY;
         const distance = Math.hypot(dx, dy);
+        const now = performance.now();
+        const sampleDt = now - lastT;
+        if (sampleDt > 0) {
+          const instant = (moveEvent.clientX - lastX) / sampleDt;
+          velocityX = velocityX * 0.68 + instant * 0.32;
+        }
+        lastX = moveEvent.clientX;
+        lastT = now;
 
         // Stay frozen in click mode until movement exceeds threshold
         if (!didDrag) {
@@ -444,10 +604,14 @@ export function SocialCarousel() {
       const onUp = (upEvent: PointerEvent) => {
         if (!tracking || upEvent.pointerId !== pointerId) return;
         const delta = upEvent.clientX - startX;
-        finishInteraction();
+
+        // Decay stale velocity if the finger paused before release
+        const idle = performance.now() - lastT;
+        if (idle > 80) velocityX = 0;
 
         // Click: restore exact freeze snapshot, then resume after delay
         if (!didDrag) {
+          finishInteraction();
           activeRef.current = baseActive;
           autoOffsetRef.current = baseOffset;
           dragOffsetRef.current = baseOffset;
@@ -459,6 +623,37 @@ export function SocialCarousel() {
 
         // Drag: block the synthetic click that would open a link
         suppressClickRef.current = true;
+
+        // Touch inertia — desktop mouse keeps the existing snap path
+        if (isTouchPointer && !prefersReducedMotion) {
+          tracking = false;
+          endListeners();
+          draggingRef.current = false;
+          stageRef.current?.classList.remove("is-dragging");
+          try {
+            stageRef.current?.releasePointerCapture?.(pointerId);
+          } catch {
+            /* already released */
+          }
+
+          autoOffsetRef.current = dragOffsetRef.current;
+          if (startInertia(velocityX)) return;
+
+          clearPointerPaintLock();
+          interactionLockRef.current = false;
+          if (Math.abs(delta) < SNAP_THRESHOLD_PX) {
+            commitAutoWraps();
+            dragOffsetRef.current = autoOffsetRef.current;
+            renderCarousel(autoOffsetRef.current);
+            setActiveIndex(activeRef.current);
+            scheduleAutoResume();
+            return;
+          }
+          setActive(activeRef.current + (delta < 0 ? 1 : -1));
+          return;
+        }
+
+        finishInteraction();
         interactionLockRef.current = false;
 
         if (Math.abs(delta) < SNAP_THRESHOLD_PX) {
@@ -478,11 +673,14 @@ export function SocialCarousel() {
       window.addEventListener("pointercancel", onUp);
     },
     [
+      clearPointerPaintLock,
       commitAutoWraps,
       freezeAtCurrentPosition,
+      prefersReducedMotion,
       renderCarousel,
       scheduleAutoResume,
       setActive,
+      startInertia,
     ],
   );
 
