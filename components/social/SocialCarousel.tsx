@@ -24,6 +24,7 @@ import {
   wrapIndex,
 } from "@/components/social/archiveCoverflow";
 import { SOCIAL_PLATFORMS } from "@/data/social";
+import { BRAND } from "@/lib/constants";
 import { usePrefersReducedMotion } from "@/hooks";
 
 /** Continuous auto-scroll — one card every ~2.5s (does not alter drag physics) */
@@ -46,6 +47,7 @@ const CLICK_MOVE_MAX_PX = 5;
 export function SocialCarousel() {
   const length = SOCIAL_PLATFORMS.length;
   const stageRef = useRef<HTMLDivElement>(null);
+  const hitTargetRef = useRef<HTMLAnchorElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const activeRef = useRef(0);
   const dragOffsetRef = useRef(0);
@@ -69,6 +71,48 @@ export function SocialCarousel() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const activePlatform = SOCIAL_PLATFORMS[activeIndex];
 
+  /**
+   * Flat 2D hit proxy — mirrors the front card's screen rect.
+   * Keeps clicks working under preserve-3d without touching coverflow paint.
+   */
+  const syncHitTarget = useCallback(() => {
+    const hit = hitTargetRef.current;
+    const stage = stageRef.current;
+    if (!hit || !stage) return;
+
+    let frontIndex = -1;
+    let frontEl: HTMLElement | null = null;
+    for (let i = 0; i < length; i += 1) {
+      const el = cardRefs.current[i];
+      if (el?.classList.contains("is-coverflow-front")) {
+        frontIndex = i;
+        frontEl = el;
+        break;
+      }
+    }
+
+    if (!frontEl || frontIndex < 0) {
+      hit.hidden = true;
+      hit.removeAttribute("href");
+      return;
+    }
+
+    const platform = SOCIAL_PLATFORMS[frontIndex];
+    const stageRect = stage.getBoundingClientRect();
+    const rect = frontEl.getBoundingClientRect();
+
+    hit.hidden = false;
+    hit.href = platform.url;
+    hit.setAttribute(
+      "aria-label",
+      `Open ${platform.name} — ${BRAND.handle}`,
+    );
+    hit.style.left = `${rect.left - stageRect.left}px`;
+    hit.style.top = `${rect.top - stageRect.top}px`;
+    hit.style.width = `${rect.width}px`;
+    hit.style.height = `${rect.height}px`;
+  }, [length]);
+
   /** Archive renderCarousel(offsetShift) — DOM only */
   const renderCarousel = useCallback(
     (offsetShift: number) => {
@@ -78,8 +122,9 @@ export function SocialCarousel() {
         const offset = signedOffset(i, activeRef.current, length) + offsetShift;
         applyArchiveCardPaint(el, paintArchiveCard(offset));
       }
+      syncHitTarget();
     },
-    [length],
+    [length, syncHitTarget],
   );
 
   const setAutoScrollingClass = useCallback((on: boolean) => {
@@ -131,6 +176,12 @@ export function SocialCarousel() {
     frozenActiveRef.current = activeRef.current;
     frozenOffsetRef.current = autoOffsetRef.current;
     dragOffsetRef.current = frozenOffsetRef.current;
+    // Kill CSS transform transitions for the whole gesture (click or drag)
+    stageRef.current?.classList.add("is-pointer-active");
+    for (const el of cardRefs.current) {
+      if (!el) continue;
+      el.style.transition = "none";
+    }
     renderCarousel(frozenOffsetRef.current);
   }, [pauseAutoScroll, renderCarousel]);
 
@@ -322,6 +373,11 @@ export function SocialCarousel() {
         endListeners();
         draggingRef.current = false;
         stageRef.current?.classList.remove("is-dragging");
+        stageRef.current?.classList.remove("is-pointer-active");
+        for (const el of cardRefs.current) {
+          if (!el) continue;
+          el.style.transition = "";
+        }
         try {
           stageRef.current?.releasePointerCapture?.(pointerId);
         } catch {
@@ -342,10 +398,14 @@ export function SocialCarousel() {
           didDrag = true;
           draggingRef.current = true;
           stageRef.current?.classList.add("is-dragging");
-          stageRef.current?.setPointerCapture?.(pointerId);
+          try {
+            stageRef.current?.setPointerCapture?.(pointerId);
+          } catch {
+            /* ignore — still apply drag math this frame */
+          }
         }
 
-        // Archive drag math — only after confirmed drag
+        // Archive drag math: same sign as pointer (left → negative offset)
         dragOffsetRef.current = Math.max(
           -DRAG_CLAMP,
           Math.min(DRAG_CLAMP, baseOffset + dx / STEP_PX),
@@ -404,6 +464,20 @@ export function SocialCarousel() {
     scheduleAutoResume();
   }, [pauseAutoScroll, scheduleAutoResume]);
 
+  // Returning to the tab/window: resume from the frozen position after 750ms
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        pauseAutoScroll();
+        return;
+      }
+      if (interactionLockRef.current || draggingRef.current) return;
+      scheduleAutoResume();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [pauseAutoScroll, scheduleAutoResume]);
+
   const onClickCapture = useCallback((event: MouseEvent) => {
     if (!suppressClickRef.current) return;
     event.preventDefault();
@@ -460,6 +534,18 @@ export function SocialCarousel() {
               />
             ))}
           </div>
+
+          {/* Flat hit proxy — clickable region for the front card only */}
+          <a
+            ref={hitTargetRef}
+            className="coverflow-hit-target"
+            target="_blank"
+            rel="noopener noreferrer"
+            hidden
+            tabIndex={-1}
+            aria-hidden="true"
+            draggable={false}
+          />
 
           <span className="sr-only" aria-live="polite">
             {activePlatform.name}: {activePlatform.description}

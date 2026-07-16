@@ -3,8 +3,8 @@
  * Paint path split for compositor: transform on host, filter/opacity on fx layer.
  */
 
-/** Neighbor pitch — +10px vs archive 176 for desktop composition only */
-export const STEP_PX = 186;
+/** Neighbor pitch — breathing room between cards (symmetric translateX) */
+export const STEP_PX = 200;
 export const DEPTH_STEP = 120;
 export const ROTATE_STEP = -34;
 export const SCALE_STEP = 0.08;
@@ -46,6 +46,7 @@ export type ArchiveCardPaint = {
   zIndex: number;
   pointerEvents: "auto" | "none";
   isActive: boolean;
+  isFront: boolean;
 };
 
 type PaintCache = {
@@ -55,6 +56,7 @@ type PaintCache = {
   zIndex: number;
   pointerEvents: "auto" | "none";
   isActive: boolean;
+  isFront: boolean;
 };
 
 const paintCache = new WeakMap<HTMLElement, PaintCache>();
@@ -71,7 +73,14 @@ export function paintArchiveCard(offset: number): ArchiveCardPaint {
   const z = -clamped * DEPTH_STEP;
   const rotate = offset * ROTATE_STEP;
   const scale = 1 - clamped * SCALE_STEP;
-  const isActive = Math.abs(offset) < 0.08;
+  /** Visual center — float, border, dominant shadow (|offset| < 0.08) */
+  const isActive = abs < 0.08;
+  /**
+   * Clickable front — wider than visual center so auto-scroll stays clickable.
+   * Does NOT affect transforms, spacing, z-index, opacity, or filters.
+   * Cards themselves stay pointer-events:none; a flat hit proxy uses this flag.
+   */
+  const isFront = abs < 0.5;
 
   return {
     transform: `translate(-50%, -50%) translate3d(${x}px, 0, ${z}px) rotateY(${rotate}deg) scale(${scale})`,
@@ -81,8 +90,10 @@ export function paintArchiveCard(offset: number): ArchiveCardPaint {
         ? "brightness(1)"
         : `brightness(${0.75 - clamped * 0.04}) blur(${clamped * 0.4}px)`,
     zIndex: Math.round(20 - clamped),
-    pointerEvents: abs <= 1 ? "auto" : "none",
+    // Hit-testing is owned by the flat coverflow hit proxy (preserve-3d safe)
+    pointerEvents: "none",
     isActive,
+    isFront,
   };
 }
 
@@ -119,6 +130,9 @@ export function applyArchiveCardPaint(
     el.classList.toggle("is-active", paint.isActive);
     el.classList.toggle("is-coverflow-center", paint.isActive);
   }
+  if (!prev || prev.isFront !== paint.isFront) {
+    el.classList.toggle("is-coverflow-front", paint.isFront);
+  }
 
   paintCache.set(el, {
     transform: paint.transform,
@@ -127,5 +141,6 @@ export function applyArchiveCardPaint(
     zIndex: paint.zIndex,
     pointerEvents: paint.pointerEvents,
     isActive: paint.isActive,
+    isFront: paint.isFront,
   });
 }

@@ -501,6 +501,9 @@ body {
   transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: transform;
   transform: translate3d(0, 0, 0);
+  cursor: default;
+  pointer-events: none;
+  box-shadow: var(--coverflow-shadow-idle);
 }
 
 /* filter/opacity live here so transform updates don't re-blur every frame */
@@ -517,12 +520,31 @@ body {
   pointer-events: none;
 }
 
-.coverflow-fx-layer > * {
-  pointer-events: auto;
+.coverflow-fx-layer,
+.coverflow-fx-layer * {
+  pointer-events: none !important;
 }
 
 .social-coverflow-card.is-coverflow-center {
   border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: var(--coverflow-shadow-active);
+}
+
+/* Flat 2D hit proxy — synced to the front card's screen rect; independent of 3D paint */
+.coverflow-hit-target {
+  position: absolute;
+  z-index: 40;
+  display: block;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 28px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.coverflow-hit-target[hidden] {
+  display: none;
+  pointer-events: none;
 }
 
 @keyframes coverflow-float {
@@ -560,12 +582,20 @@ body {
   animation: none !important;
 }
 
-/* Auto-scroll: compositor writes every frame — CSS transition/float cause micro-jitter */
-.carousel-stage.is-auto-scrolling .social-coverflow-card {
+/*
+ * Auto-scroll and live drag both write transforms every frame.
+ * CSS 520ms transform transitions must stay off or 3D matrix interpolation
+ * fights the pointer (appears inverted / non-following).
+ */
+.carousel-stage.is-auto-scrolling .social-coverflow-card,
+.carousel-stage.is-dragging .social-coverflow-card,
+.carousel-stage.is-pointer-active .social-coverflow-card {
   transition: none !important;
 }
 
-.carousel-stage.is-auto-scrolling .social-coverflow-card .coverflow-fx-layer {
+.carousel-stage.is-auto-scrolling .social-coverflow-card .coverflow-fx-layer,
+.carousel-stage.is-dragging .social-coverflow-card .coverflow-fx-layer,
+.carousel-stage.is-pointer-active .social-coverflow-card .coverflow-fx-layer {
   transition: none !important;
 }
 

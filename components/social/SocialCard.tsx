@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { SocialIcon } from "@/components/social/SocialIcon";
 import { PLATFORM_CARD_THEMES } from "@/components/social/cardThemes";
 import { BRAND } from "@/lib/constants";
@@ -25,7 +25,6 @@ export function SocialCard({
   layoutActive,
   liteEffects,
   onBind,
-  onSelect,
 }: SocialCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const theme = PLATFORM_CARD_THEMES[platform.icon];
@@ -41,6 +40,23 @@ export function SocialCard({
   const enableHoverFX =
     layoutActive && !liteEffects && !prefersReducedMotion;
 
+  const cardStyle = {
+    transformStyle: "preserve-3d",
+    background: theme.surface,
+    "--coverflow-shadow-active": [
+      `0 36px 70px rgba(0,0,0,0.55)`,
+      `0 0 56px ${theme.shadow}`,
+      `inset 0 1px 0 rgba(255,255,255,0.35)`,
+      `inset 0 -1px 0 rgba(0,0,0,0.2)`,
+    ].join(", "),
+    "--coverflow-shadow-idle": [
+      `0 22px 48px rgba(0,0,0,0.42)`,
+      `0 0 24px ${theme.shadow}`,
+      `inset 0 1px 0 rgba(255,255,255,0.22)`,
+      `inset 0 -1px 0 rgba(0,0,0,0.15)`,
+    ].join(", "),
+  } as CSSProperties;
+
   return (
     <a
       ref={linkRef}
@@ -54,7 +70,6 @@ export function SocialCard({
       onKeyDown={(event) => {
         if (!layoutActive && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
-          onSelect();
         }
       }}
       onMouseEnter={() => {
@@ -75,27 +90,11 @@ export function SocialCard({
       }}
       className={cn(
         "social-coverflow-card absolute top-1/2 left-1/2 overflow-hidden will-change-transform",
-        "w-[clamp(150px,21vw,250px)] aspect-square",
+        "w-[clamp(137px,19vw,228px)] aspect-square",
         "rounded-[28px] border sm:rounded-[32px]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-glow/65 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
-      style={{
-        transformStyle: "preserve-3d",
-        background: theme.surface,
-        boxShadow: layoutActive
-          ? [
-              `0 36px 70px rgba(0,0,0,0.55)`,
-              `0 0 56px ${theme.shadow}`,
-              `inset 0 1px 0 rgba(255,255,255,0.35)`,
-              `inset 0 -1px 0 rgba(0,0,0,0.2)`,
-            ].join(", ")
-          : [
-              `0 22px 48px rgba(0,0,0,0.42)`,
-              `0 0 24px ${theme.shadow}`,
-              `inset 0 1px 0 rgba(255,255,255,0.22)`,
-              `inset 0 -1px 0 rgba(0,0,0,0.15)`,
-            ].join(", "),
-      }}
+      style={cardStyle}
     >
       <div className="coverflow-fx-layer">
         <span

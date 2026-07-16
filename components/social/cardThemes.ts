@@ -82,8 +82,8 @@ export const PLATFORM_CARD_THEMES: Record<SocialIconId, PlatformCardTheme> = {
 
 /** Kept for any legacy imports — mirrors archiveCoverflow STEP_PX */
 export const CARD_SPACING = {
-  compact: 186,
-  desktop: 186,
+  compact: 200,
+  desktop: 200,
 } as const;
 
 /**
